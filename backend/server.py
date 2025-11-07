@@ -17,7 +17,8 @@ from models import (
     Consent, ConsentCreate,
     ChatMessage, ChatMessageCreate,
     LandmarkCase,
-    ClientRegister, ClientLogin, Token
+    ClientRegister, ClientLogin, Token,
+    Meeting, MeetingCreate
 )
 from utils import (
     generate_client_number,
