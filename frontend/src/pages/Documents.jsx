@@ -24,46 +24,66 @@ const Documents = () => {
     setSelectedFiles(Array.from(e.target.files));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!clientNumber) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Bitte geben Sie Ihre Mandantennummer ein' : 'Please enter your client number',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!mockClientNumbers.includes(clientNumber)) {
-      toast({
-        title: t(language, 'invalidNumber'),
-        description: language === 'de' 
-          ? 'Die eingegebene Mandantennummer ist nicht gültig oder nicht registriert.' 
-          : 'The entered client number is not valid or not registered.',
-        variant: 'destructive'
-      });
+      toast.error(
+        language === 'de' ? 'Fehler' : 'Error',
+        { description: language === 'de' ? 'Bitte geben Sie Ihre Mandantennummer ein' : 'Please enter your client number' }
+      );
       return;
     }
 
     if (selectedFiles.length === 0) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Bitte wählen Sie mindestens eine Datei aus' : 'Please select at least one file',
-        variant: 'destructive'
-      });
+      toast.error(
+        language === 'de' ? 'Fehler' : 'Error',
+        { description: language === 'de' ? 'Bitte wählen Sie mindestens eine Datei aus' : 'Please select at least one file' }
+      );
       return;
     }
 
-    // Simulate upload
-    toast({
-      title: t(language, 'uploadSuccess'),
-      description: language === 'de' 
-        ? `${selectedFiles.length} Datei(en) erfolgreich hochgeladen` 
-        : `${selectedFiles.length} file(s) uploaded successfully`,
-    });
-    
-    setClientNumber('');
-    setSelectedFiles([]);
+    try {
+      // Validate client number first
+      const validateResponse = await axios.get(`${API}/clients/${clientNumber}/validate`);
+      
+      if (!validateResponse.data.valid) {
+        toast.error(t(language, 'invalidNumber'), {
+          description: language === 'de' 
+            ? 'Die eingegebene Mandantennummer ist nicht gültig oder nicht registriert.' 
+            : 'The entered client number is not valid or not registered.'
+        });
+        return;
+      }
+
+      // Upload each file
+      let uploadedCount = 0;
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('clientNumber', clientNumber);
+        formData.append('file', file);
+
+        await axios.post(`${API}/documents/upload`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        uploadedCount++;
+      }
+
+      toast.success(t(language, 'uploadSuccess'), {
+        description: language === 'de' 
+          ? `${uploadedCount} Datei(en) erfolgreich hochgeladen` 
+          : `${uploadedCount} file(s) uploaded successfully`
+      });
+      
+      setClientNumber('');
+      setSelectedFiles([]);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(
+        language === 'de' ? 'Upload fehlgeschlagen' : 'Upload failed',
+        { description: error.response?.data?.detail || error.message }
+      );
+    }
   };
 
   const handleDownload = () => {
