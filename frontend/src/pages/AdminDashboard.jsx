@@ -244,13 +244,29 @@ const AdminDashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Button
                 onClick={() => navigate('/admin/clients')}
                 className="h-24 flex flex-col items-center justify-center space-y-2 bg-blue-600 hover:bg-blue-700"
               >
                 <Users className="w-8 h-8" />
                 <span>{language === 'de' ? 'Mandanten verwalten' : 'Manage Clients'}</span>
+              </Button>
+              
+              <Button
+                onClick={() => navigate('/admin/forensics')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Fingerprint className="w-8 h-8" />
+                <span>{language === 'de' ? 'Forensische Fälle' : 'Forensic Cases'}</span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/admin/meetings')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-cyan-600 hover:bg-cyan-700"
+              >
+                <Video className="w-8 h-8" />
+                <span>{language === 'de' ? 'Video-Konsultationen' : 'Video Consultations'}</span>
               </Button>
               
               <Button
