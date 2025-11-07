@@ -903,6 +903,197 @@ async def delete_forensic_case(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== VIDEO MEETINGS ====================
+
+@api_router.post("/meetings/create")
+async def create_meeting(
+    meeting_data: MeetingCreate,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Create a video meeting/consultation
+    
+    Generates a unique room name and meeting URL for Jitsi
+    """
+    try:
+        # Generate unique meeting ID
+        meeting_id = f"MTG_{current_client['clientNumber']}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        
+        # Generate room name for Jitsi
+        room_name = f"safechild-{current_client['clientNumber']}-{datetime.utcnow().strftime('%Y%m%d%H%M')}"
+        
+        # Create meeting URL (frontend will use this)
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+        meeting_url = f"{frontend_url}/video-call?room={room_name}"
+        
+        # Create meeting record
+        meeting_record = {
+            "meetingId": meeting_id,
+            "clientNumber": current_client["clientNumber"],
+            "clientEmail": current_client["email"],
+            "title": meeting_data.title,
+            "description": meeting_data.description,
+            "roomName": room_name,
+            "meetingUrl": meeting_url,
+            "scheduledTime": meeting_data.scheduledTime,
+            "duration": meeting_data.duration,
+            "meetingType": meeting_data.meetingType,
+            "status": "scheduled",
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        }
+        
+        await db.meetings.insert_one(meeting_record)
+        
+        return {
+            "success": True,
+            "meetingId": meeting_id,
+            "roomName": room_name,
+            "meetingUrl": meeting_url,
+            "message": "Meeting created successfully"
+        }
+        
+    except Exception as e:
+        print(f"[API] Error creating meeting: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/meetings/my-meetings")
+async def get_my_meetings(
+    current_client: dict = Depends(get_current_client),
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 50
+):
+    """
+    Get all meetings for current client
+    
+    Optional filter by status: scheduled, in_progress, completed, cancelled
+    """
+    try:
+        query = {"clientNumber": current_client["clientNumber"]}
+        
+        if status:
+            query["status"] = status
+        
+        meetings = await db.meetings.find(
+            query,
+            {"_id": 0}
+        ).sort("createdAt", -1).skip(skip).limit(limit).to_list(limit)
+        
+        return {
+            "total": len(meetings),
+            "meetings": meetings
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/meetings/{meeting_id}")
+async def get_meeting_details(
+    meeting_id: str,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Get meeting details
+    """
+    try:
+        meeting = await db.meetings.find_one({
+            "meetingId": meeting_id,
+            "clientNumber": current_client["clientNumber"]
+        }, {"_id": 0})
+        
+        if not meeting:
+            raise HTTPException(status_code=404, detail="Meeting not found")
+        
+        return meeting
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.patch("/meetings/{meeting_id}/status")
+async def update_meeting_status(
+    meeting_id: str,
+    status: str,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Update meeting status
+    
+    Valid statuses: scheduled, in_progress, completed, cancelled
+    """
+    try:
+        valid_statuses = ["scheduled", "in_progress", "completed", "cancelled"]
+        if status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            )
+        
+        meeting = await db.meetings.find_one({
+            "meetingId": meeting_id,
+            "clientNumber": current_client["clientNumber"]
+        })
+        
+        if not meeting:
+            raise HTTPException(status_code=404, detail="Meeting not found")
+        
+        update_data = {
+            "status": status,
+            "updatedAt": datetime.utcnow()
+        }
+        
+        # Update timestamps based on status
+        if status == "in_progress" and not meeting.get("startedAt"):
+            update_data["startedAt"] = datetime.utcnow()
+        elif status == "completed" and not meeting.get("endedAt"):
+            update_data["endedAt"] = datetime.utcnow()
+        
+        await db.meetings.update_one(
+            {"meetingId": meeting_id},
+            {"$set": update_data}
+        )
+        
+        return {"success": True, "message": "Meeting status updated"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/meetings/{meeting_id}")
+async def delete_meeting(
+    meeting_id: str,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Delete/cancel a meeting
+    """
+    try:
+        meeting = await db.meetings.find_one({
+            "meetingId": meeting_id,
+            "clientNumber": current_client["clientNumber"]
+        })
+        
+        if not meeting:
+            raise HTTPException(status_code=404, detail="Meeting not found")
+        
+        if meeting["status"] == "in_progress":
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot delete meeting that is in progress"
+            )
+        
+        await db.meetings.delete_one({"meetingId": meeting_id})
+        
+        return {"success": True, "message": "Meeting deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== ADMIN PANEL ====================
 
 @api_router.get("/admin/clients")
