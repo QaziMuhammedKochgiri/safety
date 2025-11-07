@@ -214,7 +214,7 @@
 - [x] Supervisor process management
 - [x] Environment variables configured
 - [x] CORS properly configured
-- [x] Production URL: https://legalfamily-1.preview.emergentagent.com
+- [x] Production URL: https://childlaw-portal.preview.emergentagent.com
 
 ---
 
