@@ -101,3 +101,198 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "SafeChild Law Firm Backend API - Comprehensive testing of all backend endpoints including landmark cases, client management, document upload/download, consent logging, and chat messages"
+
+backend:
+  - task: "Health Check API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/ endpoint working correctly. Returns status: operational, version: 1.0.0"
+
+  - task: "Landmark Cases - Get All Cases"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/cases/landmark working correctly. Returns 3 landmark cases as expected. Database seeded successfully with SC2020-MONASKY, SC2023-WINSTON, and SC2021-URGENT cases"
+
+  - task: "Landmark Cases - Get Specific Case"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/cases/landmark/{case_number} working correctly. Successfully retrieved SC2020-MONASKY case with all details. 404 error handling works correctly for invalid case numbers"
+
+  - task: "Client Management - Create Client"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/clients working correctly. Successfully created client with generated client number (SC2025967). Email validation working (422 for invalid email). Returns success, clientNumber, and message"
+
+  - task: "Client Management - Get Client Details"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/clients/{client_number} working correctly. Successfully retrieved client details. 404 error handling works correctly for invalid client numbers"
+
+  - task: "Client Management - Validate Client Number"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/clients/{client_number}/validate working correctly. Returns valid:true for existing clients and valid:false for non-existent clients"
+
+  - task: "Document Management - Upload Document"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/documents/upload working correctly. Successfully uploaded document with generated document number (DOC2025404). File type validation working (400 for .exe files). Client validation working (404 for invalid client). Returns success, documentNumber, fileName, and uploadedAt"
+
+  - task: "Document Management - Download Document"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/documents/{document_number}/download working correctly. Successfully downloaded document (86 bytes). 404 error handling works correctly for invalid document numbers"
+
+  - task: "Document Management - List Client Documents"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/documents/client/{client_number} working correctly. Successfully retrieved list of documents for client (1 document found)"
+
+  - task: "Consent Logging - Log Consent"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL BUG: POST /api/consent returns 500 error with message 'models.Consent() got multiple values for keyword argument ipAddress'. Root cause: server.py line 186-195 extracts IP from request.client.host and passes it as ipAddress parameter, but ConsentCreate model (models.py line 63) already includes ipAddress as a required field in the request body. This causes duplicate ipAddress arguments when creating Consent object. FIX REQUIRED: Either remove ipAddress from ConsentCreate model and always extract from request, OR remove lines 189-190 and 194 from server.py to use the IP from request body"
+
+  - task: "Consent Logging - Get Consent"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "GET /api/consent/{session_id} returns 404 because consent was never created due to the POST /api/consent bug. Once POST is fixed, this endpoint should work correctly. 404 error handling for invalid sessions works correctly"
+
+  - task: "Chat Messages - Send Message"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/chat/message working correctly. Successfully sent messages with generated message IDs. Field validation working (422 for missing fields). Returns success, messageId, and timestamp"
+
+  - task: "Chat Messages - Get Chat History"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/chat/{session_id} working correctly. Successfully retrieved chat history with 2 messages sorted by timestamp. Returns empty array for non-existent sessions (correct behavior)"
+
+frontend:
+  - task: "Frontend Testing"
+    implemented: "NA"
+    working: "NA"
+    file: "NA"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed as per testing agent instructions - only backend testing was requested"
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+  last_updated: "2025-01-10"
+
+test_plan:
+  current_focus:
+    - "Consent Logging - Log Consent"
+    - "Consent Logging - Get Consent"
+  stuck_tasks:
+    - "Consent Logging - Log Consent"
+  test_all: true
+  test_priority: "high_first"
+  notes: "All backend APIs tested comprehensively. 23 out of 25 tests passed (92% success rate). Only consent logging endpoints have critical bugs that need fixing"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive backend API testing. Created backend_test.py with 25 test cases covering all endpoints including success and error scenarios. Test results: 23 passed, 2 failed. Critical bug found in consent logging endpoint - duplicate ipAddress parameter issue. All other endpoints working correctly including landmark cases, client management, document upload/download, and chat messages. Detailed test results and root cause analysis documented in status_history"
+  - agent: "testing"
+    message: "CRITICAL BUG DETAILS: The consent logging POST endpoint has a code conflict where ipAddress is being passed twice - once from the request body (ConsentCreate model requires it) and once extracted from request.client.host. This causes a 500 error. Main agent needs to decide on the design: either always extract IP from request (remove from ConsentCreate model) or use IP from request body (remove extraction logic from endpoint)"
