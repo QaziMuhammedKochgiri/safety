@@ -52,6 +52,111 @@ app = FastAPI(title="SafeChild Law Firm API")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# ==================== AUTHENTICATION ====================
+
+@api_router.post("/auth/register", response_model=Token)
+async def register_client(client_data: ClientRegister):
+    """Register a new client with login credentials"""
+    try:
+        # Check if email already exists
+        existing_client = await db.clients.find_one({"email": client_data.email})
+        if existing_client:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Generate client number
+        client_number = generate_client_number()
+        
+        # Hash password
+        hashed_password = get_password_hash(client_data.password)
+        
+        # Create client
+        client = Client(
+            clientNumber=client_number,
+            firstName=client_data.firstName,
+            lastName=client_data.lastName,
+            email=client_data.email,
+            phone=client_data.phone,
+            country=client_data.country,
+            caseType=client_data.caseType,
+            hashedPassword=hashed_password
+        )
+        
+        await db.clients.insert_one(client.dict())
+        
+        # Create access token
+        access_token = create_access_token(
+            data={"sub": client_number, "email": client_data.email}
+        )
+        
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            clientNumber=client_number,
+            email=client_data.email,
+            firstName=client_data.firstName,
+            lastName=client_data.lastName
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/auth/login", response_model=Token)
+async def login_client(credentials: ClientLogin):
+    """Login with email and password"""
+    try:
+        # Find client by email
+        client = await db.clients.find_one({"email": credentials.email})
+        
+        if not client or not client.get("hashedPassword"):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
+        
+        # Verify password
+        if not verify_password(credentials.password, client["hashedPassword"]):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password"
+            )
+        
+        # Create access token
+        access_token = create_access_token(
+            data={"sub": client["clientNumber"], "email": client["email"]}
+        )
+        
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            clientNumber=client["clientNumber"],
+            email=client["email"],
+            firstName=client["firstName"],
+            lastName=client["lastName"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/auth/me")
+async def get_current_user_info(current_client: dict = Depends(get_current_client)):
+    """Get current authenticated client info"""
+    try:
+        client = await db.clients.find_one(
+            {"clientNumber": current_client["clientNumber"]},
+            {"_id": 0, "hashedPassword": 0}
+        )
+        if not client:
+            raise HTTPException(status_code=404, detail="Client not found")
+        return client
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== CLIENT MANAGEMENT ====================
 
 @api_router.post("/clients")
