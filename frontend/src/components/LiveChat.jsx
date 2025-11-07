@@ -56,46 +56,90 @@ const LiveChat = () => {
     }
   };
 
-  const handleConsentAccept = () => {
-    setHasConsent(true);
-    setShowConsent(false);
-    setIsOpen(true);
-    // Add welcome message
-    setMessages([{
-      id: 1,
-      sender: 'bot',
-      text: language === 'de'
-        ? 'Vielen Dank für Ihre Zustimmung. Wie können wir Ihnen helfen?'
-        : 'Thank you for your consent. How can we help you?',
-      timestamp: new Date(),
-    }]);
+  const loadChatHistory = async () => {
+    if (!sessionId) return;
+    
+    try {
+      const response = await axios.get(`${API}/chat/${sessionId}`);
+      if (response.data.messages && response.data.messages.length > 0) {
+        setMessages(response.data.messages);
+      } else {
+        // Add welcome message if no history
+        const welcomeMessage = {
+          id: Date.now().toString(),
+          sender: 'bot',
+          text: language === 'de'
+            ? 'Willkommen! Wie können wir Ihnen helfen?'
+            : 'Welcome! How can we help you?',
+          timestamp: new Date().toISOString(),
+        };
+        setMessages([welcomeMessage]);
+        // Save welcome message to backend
+        await axios.post(`${API}/chat/message`, {
+          sessionId,
+          sender: 'bot',
+          message: welcomeMessage.text,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
   };
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return;
+  const handleConsentAccept = () => {
+    const savedConsent = localStorage.getItem('safechild-consent');
+    const consentData = JSON.parse(savedConsent);
+    const newSessionId = consentData.sessionId || `session_${Date.now()}`;
+    
+    setHasConsent(true);
+    setSessionId(newSessionId);
+    setShowConsent(false);
+    setIsOpen(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !sessionId) return;
 
     const newMessage = {
-      id: messages.length + 1,
-      sender: 'user',
+      id: Date.now().toString(),
+      sender: 'client',
       text: inputMessage,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
     setMessages([...messages, newMessage]);
     setInputMessage('');
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botResponse = {
-        id: messages.length + 2,
-        sender: 'bot',
-        text: language === 'de'
-          ? 'Vielen Dank für Ihre Nachricht. Ein Mitarbeiter wird sich in Kürze bei Ihnen melden.'
-          : 'Thank you for your message. A team member will be with you shortly.',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, botResponse]);
-    }, 1000);
+    try {
+      // Send message to backend
+      await axios.post(`${API}/chat/message`, {
+        sessionId,
+        sender: 'client',
+        message: inputMessage,
+      });
+
+      // Simulate bot response
+      setTimeout(async () => {
+        const botResponse = {
+          id: Date.now().toString(),
+          sender: 'bot',
+          text: language === 'de'
+            ? 'Vielen Dank für Ihre Nachricht. Ein Mitarbeiter wird sich in Kürze bei Ihnen melden.'
+            : 'Thank you for your message. A team member will be with you shortly.',
+          timestamp: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, botResponse]);
+        
+        // Save bot response to backend
+        await axios.post(`${API}/chat/message`, {
+          sessionId,
+          sender: 'bot',
+          message: botResponse.text,
+        });
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   return (
