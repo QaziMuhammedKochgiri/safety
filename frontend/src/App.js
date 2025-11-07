@@ -77,6 +77,10 @@ function App() {
               
               {/* Portal route without public layout */}
               <Route path="/portal" element={<Portal />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/clients" element={<AdminClients />} />
             </Routes>
             <Toaster />
           </div>
