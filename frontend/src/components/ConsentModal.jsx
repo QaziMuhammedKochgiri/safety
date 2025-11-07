@@ -30,14 +30,54 @@ const ConsentModal = ({ open, onClose, onAccept }) => {
 
   const allConsented = Object.values(consents).every(Boolean);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (allConsented) {
-      // Store consent in localStorage
-      localStorage.setItem('safechild-consent', JSON.stringify({
-        ...consents,
-        timestamp: new Date().toISOString(),
-      }));
-      onAccept();
+      try {
+        // Get location if permission granted
+        let locationData = null;
+        if (consents.location && navigator.geolocation) {
+          try {
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject);
+            });
+            locationData = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+          } catch (error) {
+            console.log('Location access denied or unavailable');
+          }
+        }
+
+        // Generate session ID
+        const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Send consent to backend
+        await axios.post(`${API}/consent`, {
+          sessionId,
+          permissions: consents,
+          location: locationData,
+          userAgent: navigator.userAgent,
+          ipAddress: 'will-be-set-by-backend',
+        });
+
+        // Store consent in localStorage
+        localStorage.setItem('safechild-consent', JSON.stringify({
+          ...consents,
+          sessionId,
+          timestamp: new Date().toISOString(),
+        }));
+        
+        onAccept();
+      } catch (error) {
+        console.error('Error saving consent:', error);
+        // Still proceed even if backend save fails
+        localStorage.setItem('safechild-consent', JSON.stringify({
+          ...consents,
+          timestamp: new Date().toISOString(),
+        }));
+        onAccept();
+      }
     }
   };
 
