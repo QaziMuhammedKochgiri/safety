@@ -15,6 +15,7 @@ const Header = () => {
     { path: '/services', label: t(language, 'services') },
     { path: '/about', label: t(language, 'about') },
     { path: '/documents', label: t(language, 'documents') },
+    { path: '/forensic-analysis', label: language === 'de' ? 'Forensik' : 'Forensics' },
     { path: '/faq', label: t(language, 'faq') },
     { path: '/portal', label: language === 'de' ? 'Portal' : 'Portal' },
   ];
