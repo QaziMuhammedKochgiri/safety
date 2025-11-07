@@ -475,6 +475,386 @@ def test_chat_messages():
     except Exception as e:
         log_test("GET /api/chat/INVALID-SESSION (empty array expected)", False, str(e))
 
+def test_authentication():
+    """Test authentication endpoints and get token for protected routes"""
+    print_section("7. AUTHENTICATION API")
+    
+    # Test POST register client
+    try:
+        register_data = {
+            "firstName": "Sarah",
+            "lastName": "Johnson",
+            "email": f"sarah.johnson.{datetime.now().timestamp()}@example.com",
+            "phone": "+31612345678",
+            "country": "Netherlands",
+            "caseType": "custody_dispute",
+            "password": "SecurePassword123!"
+        }
+        response = requests.post(f"{API_BASE}/auth/register", json=register_data, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('access_token') and data.get('clientNumber'):
+                test_data['auth_token'] = data['access_token']
+                test_data['auth_client_number'] = data['clientNumber']
+                log_test("POST /api/auth/register", True, f"Client registered: {test_data['auth_client_number']}")
+            else:
+                log_test("POST /api/auth/register", False, "Missing access_token or clientNumber in response")
+        else:
+            log_test("POST /api/auth/register", False, f"Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        log_test("POST /api/auth/register", False, str(e))
+    
+    # Test POST register with duplicate email (error scenario)
+    if test_data['auth_token']:
+        try:
+            duplicate_data = {
+                "firstName": "Test",
+                "lastName": "Duplicate",
+                "email": register_data['email'],  # Same email
+                "phone": "+31612345679",
+                "country": "Netherlands",
+                "caseType": "custody_dispute",
+                "password": "Password123!"
+            }
+            response = requests.post(f"{API_BASE}/auth/register", json=duplicate_data, timeout=10)
+            if response.status_code == 400:
+                log_test("POST /api/auth/register (duplicate email - 400 expected)", True, "Correctly rejected duplicate email")
+            else:
+                log_test("POST /api/auth/register (duplicate email - 400 expected)", False, f"Expected 400, got {response.status_code}")
+        except Exception as e:
+            log_test("POST /api/auth/register (duplicate email - 400 expected)", False, str(e))
+    
+    # Test GET /auth/me (protected route)
+    if test_data['auth_token']:
+        try:
+            headers = {"Authorization": f"Bearer {test_data['auth_token']}"}
+            response = requests.get(f"{API_BASE}/auth/me", headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('clientNumber') == test_data['auth_client_number']:
+                    log_test("GET /api/auth/me (protected)", True, f"Retrieved authenticated user info")
+                else:
+                    log_test("GET /api/auth/me (protected)", False, "Client number mismatch")
+            else:
+                log_test("GET /api/auth/me (protected)", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test("GET /api/auth/me (protected)", False, str(e))
+
+def test_video_meetings():
+    """Test video meeting endpoints"""
+    print_section("8. VIDEO MEETINGS API (NEW)")
+    
+    if not test_data['auth_token']:
+        print(f"{YELLOW}⚠ Skipping meeting tests - no authentication token{RESET}")
+        return
+    
+    headers = {"Authorization": f"Bearer {test_data['auth_token']}"}
+    
+    # Test POST create meeting
+    try:
+        from datetime import datetime, timedelta
+        scheduled_time = (datetime.utcnow() + timedelta(days=1)).isoformat()
+        
+        meeting_data = {
+            "title": "Initial Custody Consultation",
+            "description": "Discuss child custody case and legal options",
+            "scheduledTime": scheduled_time,
+            "duration": 60,
+            "meetingType": "consultation"
+        }
+        response = requests.post(f"{API_BASE}/meetings/create", json=meeting_data, headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('success') and data.get('meetingId') and data.get('roomName'):
+                test_data['meeting_id'] = data['meetingId']
+                log_test("POST /api/meetings/create", True, f"Meeting created: {test_data['meeting_id']}, Room: {data['roomName']}")
+            else:
+                log_test("POST /api/meetings/create", False, "Missing success, meetingId, or roomName in response")
+        else:
+            log_test("POST /api/meetings/create", False, f"Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        log_test("POST /api/meetings/create", False, str(e))
+    
+    # Test POST create meeting without auth (error scenario)
+    try:
+        meeting_data = {
+            "title": "Test Meeting",
+            "duration": 30,
+            "meetingType": "consultation"
+        }
+        response = requests.post(f"{API_BASE}/meetings/create", json=meeting_data, timeout=10)
+        if response.status_code == 401 or response.status_code == 403:
+            log_test("POST /api/meetings/create (no auth - 401/403 expected)", True, "Correctly rejected unauthenticated request")
+        else:
+            log_test("POST /api/meetings/create (no auth - 401/403 expected)", False, f"Expected 401/403, got {response.status_code}")
+    except Exception as e:
+        log_test("POST /api/meetings/create (no auth - 401/403 expected)", False, str(e))
+    
+    # Test GET my meetings
+    try:
+        response = requests.get(f"{API_BASE}/meetings/my-meetings", headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            meetings = data.get('meetings', [])
+            if len(meetings) > 0:
+                log_test("GET /api/meetings/my-meetings", True, f"Retrieved {len(meetings)} meeting(s)")
+            else:
+                log_test("GET /api/meetings/my-meetings", False, "No meetings found")
+        else:
+            log_test("GET /api/meetings/my-meetings", False, f"Status code: {response.status_code}")
+    except Exception as e:
+        log_test("GET /api/meetings/my-meetings", False, str(e))
+    
+    # Test GET my meetings with status filter
+    try:
+        response = requests.get(f"{API_BASE}/meetings/my-meetings?status=scheduled", headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            meetings = data.get('meetings', [])
+            log_test("GET /api/meetings/my-meetings?status=scheduled", True, f"Retrieved {len(meetings)} scheduled meeting(s)")
+        else:
+            log_test("GET /api/meetings/my-meetings?status=scheduled", False, f"Status code: {response.status_code}")
+    except Exception as e:
+        log_test("GET /api/meetings/my-meetings?status=scheduled", False, str(e))
+    
+    # Test GET specific meeting details
+    if test_data['meeting_id']:
+        try:
+            response = requests.get(f"{API_BASE}/meetings/{test_data['meeting_id']}", headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('meetingId') == test_data['meeting_id']:
+                    log_test(f"GET /api/meetings/{test_data['meeting_id']}", True, f"Retrieved meeting details")
+                else:
+                    log_test(f"GET /api/meetings/{test_data['meeting_id']}", False, "Meeting ID mismatch")
+            else:
+                log_test(f"GET /api/meetings/{test_data['meeting_id']}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"GET /api/meetings/{test_data['meeting_id']}", False, str(e))
+    
+    # Test GET non-existent meeting (error scenario)
+    try:
+        response = requests.get(f"{API_BASE}/meetings/INVALID-MEETING", headers=headers, timeout=10)
+        if response.status_code == 404:
+            log_test("GET /api/meetings/INVALID-MEETING (404 expected)", True, "Correctly returned 404")
+        else:
+            log_test("GET /api/meetings/INVALID-MEETING (404 expected)", False, f"Expected 404, got {response.status_code}")
+    except Exception as e:
+        log_test("GET /api/meetings/INVALID-MEETING (404 expected)", False, str(e))
+    
+    # Test PATCH update meeting status to in_progress
+    if test_data['meeting_id']:
+        try:
+            response = requests.patch(
+                f"{API_BASE}/meetings/{test_data['meeting_id']}/status?status=in_progress",
+                headers=headers,
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (in_progress)", True, "Status updated to in_progress")
+                else:
+                    log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (in_progress)", False, "Missing success in response")
+            else:
+                log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (in_progress)", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (in_progress)", False, str(e))
+    
+    # Test DELETE meeting while in_progress (should fail)
+    if test_data['meeting_id']:
+        try:
+            response = requests.delete(f"{API_BASE}/meetings/{test_data['meeting_id']}", headers=headers, timeout=10)
+            if response.status_code == 400:
+                log_test(f"DELETE /api/meetings/{test_data['meeting_id']} (in_progress - 400 expected)", True, "Correctly prevented deletion of in_progress meeting")
+            else:
+                log_test(f"DELETE /api/meetings/{test_data['meeting_id']} (in_progress - 400 expected)", False, f"Expected 400, got {response.status_code}")
+        except Exception as e:
+            log_test(f"DELETE /api/meetings/{test_data['meeting_id']} (in_progress - 400 expected)", False, str(e))
+    
+    # Test PATCH update meeting status to completed
+    if test_data['meeting_id']:
+        try:
+            response = requests.patch(
+                f"{API_BASE}/meetings/{test_data['meeting_id']}/status?status=completed",
+                headers=headers,
+                timeout=10
+            )
+            if response.status_code == 200:
+                log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (completed)", True, "Status updated to completed")
+            else:
+                log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (completed)", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (completed)", False, str(e))
+    
+    # Test PATCH with invalid status (error scenario)
+    if test_data['meeting_id']:
+        try:
+            response = requests.patch(
+                f"{API_BASE}/meetings/{test_data['meeting_id']}/status?status=invalid_status",
+                headers=headers,
+                timeout=10
+            )
+            if response.status_code == 400:
+                log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (invalid status - 400 expected)", True, "Correctly rejected invalid status")
+            else:
+                log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (invalid status - 400 expected)", False, f"Expected 400, got {response.status_code}")
+        except Exception as e:
+            log_test(f"PATCH /api/meetings/{test_data['meeting_id']}/status (invalid status - 400 expected)", False, str(e))
+    
+    # Test DELETE meeting (should succeed now that it's completed)
+    if test_data['meeting_id']:
+        try:
+            response = requests.delete(f"{API_BASE}/meetings/{test_data['meeting_id']}", headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success'):
+                    log_test(f"DELETE /api/meetings/{test_data['meeting_id']}", True, "Meeting deleted successfully")
+                else:
+                    log_test(f"DELETE /api/meetings/{test_data['meeting_id']}", False, "Missing success in response")
+            else:
+                log_test(f"DELETE /api/meetings/{test_data['meeting_id']}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"DELETE /api/meetings/{test_data['meeting_id']}", False, str(e))
+
+def test_forensics():
+    """Test forensic analysis endpoints"""
+    print_section("9. FORENSICS API")
+    
+    if not test_data['auth_token']:
+        print(f"{YELLOW}⚠ Skipping forensics tests - no authentication token{RESET}")
+        return
+    
+    headers = {"Authorization": f"Bearer {test_data['auth_token']}"}
+    
+    # Create a test forensic file (.db file)
+    test_file_path = Path("/tmp/test_forensic.db")
+    test_file_content = b"SQLite format 3\x00" + b"Test forensic database content for analysis" * 100
+    test_file_path.write_bytes(test_file_content)
+    
+    # Test POST start forensic analysis
+    try:
+        with open(test_file_path, 'rb') as f:
+            files = {'backup_file': ('whatsapp_msgstore.db', f, 'application/x-sqlite3')}
+            response = requests.post(f"{API_BASE}/forensics/analyze", files=files, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') and data.get('case_id'):
+                    test_data['case_id'] = data['case_id']
+                    log_test("POST /api/forensics/analyze", True, f"Analysis started: {test_data['case_id']}")
+                else:
+                    log_test("POST /api/forensics/analyze", False, "Missing success or case_id in response")
+            else:
+                log_test("POST /api/forensics/analyze", False, f"Status code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        log_test("POST /api/forensics/analyze", False, str(e))
+    
+    # Test POST with invalid file type (error scenario)
+    try:
+        invalid_file_path = Path("/tmp/test_invalid_forensic.txt")
+        invalid_file_path.write_text("Invalid file type")
+        
+        with open(invalid_file_path, 'rb') as f:
+            files = {'backup_file': ('invalid.txt', f, 'text/plain')}
+            response = requests.post(f"{API_BASE}/forensics/analyze", files=files, headers=headers, timeout=10)
+            
+            if response.status_code == 400:
+                log_test("POST /api/forensics/analyze (invalid file type - 400 expected)", True, "Correctly rejected invalid file type")
+            else:
+                log_test("POST /api/forensics/analyze (invalid file type - 400 expected)", False, f"Expected 400, got {response.status_code}")
+        
+        invalid_file_path.unlink()
+    except Exception as e:
+        log_test("POST /api/forensics/analyze (invalid file type - 400 expected)", False, str(e))
+    
+    # Test POST without auth (error scenario)
+    try:
+        with open(test_file_path, 'rb') as f:
+            files = {'backup_file': ('test.db', f, 'application/x-sqlite3')}
+            response = requests.post(f"{API_BASE}/forensics/analyze", files=files, timeout=10)
+            
+            if response.status_code == 401 or response.status_code == 403:
+                log_test("POST /api/forensics/analyze (no auth - 401/403 expected)", True, "Correctly rejected unauthenticated request")
+            else:
+                log_test("POST /api/forensics/analyze (no auth - 401/403 expected)", False, f"Expected 401/403, got {response.status_code}")
+    except Exception as e:
+        log_test("POST /api/forensics/analyze (no auth - 401/403 expected)", False, str(e))
+    
+    # Test GET forensic status
+    if test_data['case_id']:
+        try:
+            import time
+            time.sleep(2)  # Wait a bit for processing to start
+            
+            response = requests.get(f"{API_BASE}/forensics/status/{test_data['case_id']}", headers=headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('case_id') == test_data['case_id'] and data.get('status'):
+                    log_test(f"GET /api/forensics/status/{test_data['case_id']}", True, f"Status: {data['status']}")
+                else:
+                    log_test(f"GET /api/forensics/status/{test_data['case_id']}", False, "Missing case_id or status in response")
+            else:
+                log_test(f"GET /api/forensics/status/{test_data['case_id']}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"GET /api/forensics/status/{test_data['case_id']}", False, str(e))
+    
+    # Test GET status for non-existent case (error scenario)
+    try:
+        response = requests.get(f"{API_BASE}/forensics/status/INVALID-CASE", headers=headers, timeout=10)
+        if response.status_code == 404:
+            log_test("GET /api/forensics/status/INVALID-CASE (404 expected)", True, "Correctly returned 404")
+        else:
+            log_test("GET /api/forensics/status/INVALID-CASE (404 expected)", False, f"Expected 404, got {response.status_code}")
+    except Exception as e:
+        log_test("GET /api/forensics/status/INVALID-CASE (404 expected)", False, str(e))
+    
+    # Test GET my cases
+    try:
+        response = requests.get(f"{API_BASE}/forensics/my-cases", headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            cases = data.get('cases', [])
+            if len(cases) > 0:
+                log_test("GET /api/forensics/my-cases", True, f"Retrieved {len(cases)} case(s)")
+            else:
+                log_test("GET /api/forensics/my-cases", False, "No cases found")
+        else:
+            log_test("GET /api/forensics/my-cases", False, f"Status code: {response.status_code}")
+    except Exception as e:
+        log_test("GET /api/forensics/my-cases", False, str(e))
+    
+    # Test GET report (may not be ready yet, but test the endpoint)
+    if test_data['case_id']:
+        try:
+            response = requests.get(f"{API_BASE}/forensics/report/{test_data['case_id']}", headers=headers, timeout=10)
+            if response.status_code == 200:
+                log_test(f"GET /api/forensics/report/{test_data['case_id']}", True, f"Report downloaded ({len(response.content)} bytes)")
+            elif response.status_code == 400:
+                # Analysis not completed yet - this is expected
+                log_test(f"GET /api/forensics/report/{test_data['case_id']} (not ready yet)", True, "Analysis still processing (expected)")
+            else:
+                log_test(f"GET /api/forensics/report/{test_data['case_id']}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"GET /api/forensics/report/{test_data['case_id']}", False, str(e))
+    
+    # Test DELETE case while processing (should fail)
+    if test_data['case_id']:
+        try:
+            response = requests.delete(f"{API_BASE}/forensics/case/{test_data['case_id']}", headers=headers, timeout=10)
+            if response.status_code == 400:
+                log_test(f"DELETE /api/forensics/case/{test_data['case_id']} (processing - 400 expected)", True, "Correctly prevented deletion of processing case")
+            elif response.status_code == 200:
+                # Case might have completed or failed quickly
+                log_test(f"DELETE /api/forensics/case/{test_data['case_id']}", True, "Case deleted (was not processing)")
+            else:
+                log_test(f"DELETE /api/forensics/case/{test_data['case_id']}", False, f"Status code: {response.status_code}")
+        except Exception as e:
+            log_test(f"DELETE /api/forensics/case/{test_data['case_id']}", False, str(e))
+    
+    # Cleanup
+    test_file_path.unlink()
+
 def print_summary():
     """Print test summary"""
     print_section("TEST SUMMARY")
