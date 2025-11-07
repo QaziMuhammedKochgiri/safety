@@ -31,36 +31,61 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50 py-20 lg:py-32">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full mb-6">
-              <Shield className="w-4 h-4 text-blue-600 mr-2" />
-              <span className="text-sm font-medium text-blue-900">
-                {language === 'de' ? 'Internationale Experten' : 'International Experts'}
-              </span>
+      <section className="relative bg-gradient-to-br from-blue-50 via-white to-blue-50 py-20 lg:py-32 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1758389298577-87fed4a80ed2"
+            alt="Family silhouette"
+            className="w-full h-full object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/95 via-white/95 to-blue-50/95"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div>
+              <div className="inline-flex items-center px-4 py-2 bg-blue-100 rounded-full mb-6">
+                <Shield className="w-4 h-4 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-blue-900">
+                  {language === 'de' ? 'Internationale Experten' : 'International Experts'}
+                </span>
+              </div>
+              
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                {t(language, 'heroTitle')}
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-blue-600 font-semibold mb-6">
+                {t(language, 'heroSubtitle')}
+              </p>
+              
+              <p className="text-lg text-gray-600 mb-10">
+                {t(language, 'heroDescription')}
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 shadow-lg">
+                  {t(language, 'heroButton')}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                <Button size="lg" variant="outline" className="text-lg px-8 border-2">
+                  {t(language, 'heroButtonSecondary')}
+                </Button>
+              </div>
             </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              {t(language, 'heroTitle')}
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-blue-600 font-semibold mb-6">
-              {t(language, 'heroSubtitle')}
-            </p>
-            
-            <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto">
-              {t(language, 'heroDescription')}
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8">
-                {t(language, 'heroButton')}
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8">
-                {t(language, 'heroButtonSecondary')}
-              </Button>
+
+            {/* Right Image */}
+            <div className="hidden lg:block">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl opacity-20 blur-2xl"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1761628835064-32088526e123"
+                  alt="Parent and child embrace"
+                  className="relative rounded-2xl shadow-2xl w-full h-[500px] object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
