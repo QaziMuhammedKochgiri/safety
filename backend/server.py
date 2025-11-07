@@ -373,6 +373,20 @@ async def upload_my_document(
         
         await db.documents.insert_one(document.dict())
         
+        # Send document uploaded email
+        try:
+            EmailService.send_document_uploaded(
+                recipient_email=current_client["email"],
+                recipient_name=f"{current_client.get('firstName', '')} {current_client.get('lastName', '')}".strip() or "Kunde",
+                document_name=safe_filename,
+                document_number=doc_number,
+                uploaded_at=document.uploadedAt.strftime('%d.%m.%Y %H:%M') if document.uploadedAt else ""
+            )
+            logger.info(f"Document upload confirmation sent to {current_client['email']}")
+        except Exception as e:
+            logger.error(f"Failed to send document upload email: {str(e)}")
+            # Don't fail upload if email fails
+        
         return {
             "success": True,
             "documentNumber": doc_number,
