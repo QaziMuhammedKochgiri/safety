@@ -21,6 +21,8 @@ import Register from "./pages/Register";
 import Portal from "./pages/Portal";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminClients from "./pages/AdminClients";
+import BookConsultation from "./pages/BookConsultation";
+import VideoCall from "./pages/VideoCall";
 
 function App() {
   return (
