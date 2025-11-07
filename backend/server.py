@@ -177,7 +177,7 @@ async def download_document(document_number: str):
 @api_router.get("/documents/client/{client_number}")
 async def get_client_documents(client_number: str):
     """Get all documents for a client"""
-    documents = await db.documents.find({"clientNumber": client_number}).to_list(100)
+    documents = await db.documents.find({"clientNumber": client_number}, {"_id": 0}).to_list(100)
     return {"documents": documents}
 
 # ==================== CONSENT MANAGEMENT ====================
