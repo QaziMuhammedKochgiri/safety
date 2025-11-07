@@ -131,6 +131,29 @@ const ConsentModal = ({ open, onClose, onAccept }) => {
           </DialogDescription>
         </DialogHeader>
 
+        {/* Select All Button */}
+        <div className="py-4 border-b">
+          <div
+            onClick={handleSelectAll}
+            className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:border-blue-500 transition-colors cursor-pointer bg-blue-50"
+          >
+            <Checkbox
+              id="selectAll"
+              checked={allConsented}
+              onCheckedChange={handleSelectAll}
+              className="mt-0"
+            />
+            <Label
+              htmlFor="selectAll"
+              className="flex-1 cursor-pointer font-semibold text-lg text-blue-900"
+            >
+              {language === 'de' 
+                ? '✓ Alle Berechtigungen auswählen' 
+                : '✓ Select All Permissions'}
+            </Label>
+          </div>
+        </div>
+
         <div className="space-y-4 py-4">
           {consentItems.map((item) => {
             const Icon = item.icon;
