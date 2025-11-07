@@ -21,6 +21,7 @@ class Client(BaseModel):
     phone: str
     country: str
     caseType: str
+    hashedPassword: Optional[str] = None  # For client portal login
     status: str = "active"  # "active", "closed", "pending"
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
