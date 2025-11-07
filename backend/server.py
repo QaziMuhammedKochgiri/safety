@@ -292,6 +292,79 @@ async def get_client_documents(client_number: str):
     documents = await db.documents.find({"clientNumber": client_number}, {"_id": 0}).to_list(100)
     return {"documents": documents}
 
+@api_router.get("/portal/documents")
+async def get_my_documents(current_client: dict = Depends(get_current_client)):
+    """Get authenticated client's documents (protected route)"""
+    try:
+        documents = await db.documents.find(
+            {"clientNumber": current_client["clientNumber"]},
+            {"_id": 0}
+        ).to_list(100)
+        return {"documents": documents}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/portal/documents/upload")
+async def upload_my_document(
+    file: UploadFile = File(...),
+    current_client: dict = Depends(get_current_client)
+):
+    """Upload document for authenticated client (protected route)"""
+    try:
+        client_number = current_client["clientNumber"]
+        
+        # Validate file type
+        if not is_allowed_file_type(file.filename, ALLOWED_FILE_TYPES):
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not allowed. Allowed types: {', '.join(ALLOWED_FILE_TYPES)}"
+            )
+        
+        # Validate file size
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+        
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+        
+        # Generate document number and sanitize filename
+        doc_number = generate_document_number()
+        safe_filename = sanitize_filename(file.filename)
+        
+        # Create client upload directory
+        client_dir = get_upload_directory(client_number)
+        file_path = Path(client_dir) / f"{doc_number}_{safe_filename}"
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Create document record
+        document = Document(
+            documentNumber=doc_number,
+            clientNumber=client_number,
+            fileName=safe_filename,
+            fileSize=file_size,
+            fileType=Path(safe_filename).suffix,
+            filePath=str(file_path),
+            uploadedBy="client"
+        )
+        
+        await db.documents.insert_one(document.dict())
+        
+        return {
+            "success": True,
+            "documentNumber": doc_number,
+            "fileName": safe_filename,
+            "uploadedAt": document.uploadedAt
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== CONSENT MANAGEMENT ====================
 
 @api_router.post("/consent")
