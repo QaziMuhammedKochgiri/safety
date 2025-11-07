@@ -52,7 +52,11 @@ test_data = {
     "client_number": None,
     "document_number": None,
     "session_id": "test_session_123",
-    "chat_session_id": "test_chat_456"
+    "chat_session_id": "test_chat_456",
+    "auth_token": None,
+    "auth_client_number": None,
+    "meeting_id": None,
+    "case_id": None
 }
 
 def test_health_check():
