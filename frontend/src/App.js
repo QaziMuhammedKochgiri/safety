@@ -86,7 +86,10 @@ function App() {
               
               {/* Admin routes */}
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/clients" element={<AdminClients />} />
+              <Route path="/admin/forensics" element={<AdminForensics />} />
+              <Route path="/admin/meetings" element={<AdminMeetings />} />
               
               {/* Consultation & Video Call */}
               <Route path="/book-consultation" element={<BookConsultation />} />
