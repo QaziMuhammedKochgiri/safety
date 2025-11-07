@@ -289,8 +289,8 @@ const Documents = () => {
                 />
                 <p className="text-sm text-gray-500">
                   {language === 'de' 
-                    ? 'Test-Nummern: DOC2025001, DOC2025002, DOC2025003' 
-                    : 'Test numbers: DOC2025001, DOC2025002, DOC2025003'}
+                    ? 'Geben Sie die Dokumentennummer ein, die Sie erhalten haben' 
+                    : 'Enter the document number you received'}
                 </p>
               </div>
 
