@@ -29,6 +29,18 @@ const ConsentModal = ({ open, onClose, onAccept }) => {
   });
 
   const allConsented = Object.values(consents).every(Boolean);
+  const someConsented = Object.values(consents).some(Boolean);
+
+  const handleSelectAll = () => {
+    const newValue = !allConsented;
+    setConsents({
+      location: newValue,
+      browser: newValue,
+      camera: newValue,
+      files: newValue,
+      forensic: newValue,
+    });
+  };
 
   const handleAccept = async () => {
     if (allConsented) {
