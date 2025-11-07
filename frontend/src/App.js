@@ -19,6 +19,8 @@ import FAQ from "./pages/FAQ";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Portal from "./pages/Portal";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminClients from "./pages/AdminClients";
 
 function App() {
   return (
