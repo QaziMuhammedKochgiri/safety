@@ -100,3 +100,25 @@ class LandmarkCase(BaseModel):
     facts: Dict[str, str]
     legalPrinciple: Dict[str, str]
     impact: Dict[str, str]
+
+# Authentication Models
+class ClientRegister(BaseModel):
+    email: EmailStr
+    password: str
+    firstName: str
+    lastName: str
+    phone: str
+    country: str
+    caseType: str
+
+class ClientLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    clientNumber: str
+    email: str
+    firstName: str
+    lastName: str
