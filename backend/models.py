@@ -60,7 +60,6 @@ class ConsentCreate(BaseModel):
     permissions: Permissions
     location: Optional[LocationData] = None
     userAgent: str
-    ipAddress: str
     clientNumber: Optional[str] = None
 
 class Consent(BaseModel):
