@@ -125,7 +125,11 @@ async def login_client(credentials: ClientLogin):
         
         # Create access token
         access_token = create_access_token(
-            data={"sub": client["clientNumber"], "email": client["email"]}
+            data={
+                "sub": client["clientNumber"], 
+                "email": client["email"],
+                "role": client.get("role", "client")
+            }
         )
         
         return Token(
