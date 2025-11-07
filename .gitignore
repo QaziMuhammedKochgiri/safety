@@ -29,3 +29,7 @@ Thumbs.db
 # Build
 frontend/build/
 dist/
+-e 
+# Environment files
+*.env
+*.env.*
