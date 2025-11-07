@@ -288,9 +288,10 @@ class SafeChildForensicsEngine:
         
         return {"messages": [], "contacts": []}
     
-    async def _generate_comprehensive_report(self, data: Dict, case_dir: Path) -> Path:
-        """Generate comprehensive forensic report"""
-        report_path = case_dir / f"SafeChild_Comprehensive_Report_{data['case_id']}.txt"
+    async def _generate_comprehensive_report(self, data: Dict, case_dir: Path) -> Dict:
+        """Generate comprehensive forensic reports (TXT + PDF)"""
+        report_txt_path = case_dir / f"SafeChild_Comprehensive_Report_{data['case_id']}.txt"
+        report_pdf_path = case_dir / f"SafeChild_Comprehensive_Report_{data['case_id']}.pdf"
         
         with open(report_path, 'w', encoding='utf-8') as f:
             # Header
