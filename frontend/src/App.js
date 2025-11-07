@@ -88,6 +88,7 @@ function App() {
               {/* Consultation & Video Call */}
               <Route path="/book-consultation" element={<BookConsultation />} />
               <Route path="/video-call" element={<VideoCall />} />
+              <Route path="/forensic-software" element={<ForensicSoftware />} />
             </Routes>
             <Toaster />
           </div>
