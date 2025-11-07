@@ -892,6 +892,9 @@ if __name__ == "__main__":
     test_document_management()
     test_consent_logging()
     test_chat_messages()
+    test_authentication()
+    test_video_meetings()
+    test_forensics()
     
     # Print summary
     print_summary()
