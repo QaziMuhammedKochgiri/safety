@@ -17,6 +17,17 @@ code {
         source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
+/* Hide Emergent badge - professional firm branding */
+[class*="emergent"],
+[id*="emergent"],
+a[href*="emergent"],
+div:has(> a[href*="emergent"]) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 @layer base {
     :root {
         --background: 0 0% 100%;
