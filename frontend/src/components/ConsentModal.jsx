@@ -13,6 +13,10 @@ import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { MapPin, Globe, Video, FileUp, Download } from 'lucide-react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const ConsentModal = ({ open, onClose, onAccept }) => {
   const { language } = useLanguage();
