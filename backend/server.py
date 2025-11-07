@@ -574,6 +574,334 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ==================== FORENSICS ====================
+
+from forensics.engine import SafeChildForensicsEngine
+
+# Initialize forensics engine
+forensics_engine = SafeChildForensicsEngine()
+
+# Background task to run forensic analysis
+async def run_forensic_analysis_task(
+    file_path: Path,
+    case_id: str,
+    client_info: dict
+):
+    """Background task to run forensic analysis"""
+    try:
+        print(f"[Background Task] Starting analysis for {case_id}")
+        
+        result = await forensics_engine.analyze_android_backup(
+            file_path,
+            case_id,
+            client_info
+        )
+        
+        if result["success"]:
+            # Update database with results
+            await db.forensic_analyses.update_one(
+                {"case_id": case_id},
+                {"$set": {
+                    "status": "completed",
+                    "completed_at": datetime.utcnow(),
+                    "report_txt": result.get("report_pdf"),  # Actually .txt for now
+                    "report_html": result.get("report_html"),
+                    "file_hash": result.get("file_hash"),
+                    "statistics": result.get("statistics"),
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            print(f"[Background Task] ✅ Analysis completed: {case_id}")
+        else:
+            # Update with error
+            await db.forensic_analyses.update_one(
+                {"case_id": case_id},
+                {"$set": {
+                    "status": "failed",
+                    "error": result.get("error"),
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            print(f"[Background Task] ❌ Analysis failed: {case_id}")
+            
+    except Exception as e:
+        print(f"[Background Task] ❌ Exception: {str(e)}")
+        await db.forensic_analyses.update_one(
+            {"case_id": case_id},
+            {"$set": {
+                "status": "failed",
+                "error": str(e),
+                "updated_at": datetime.utcnow()
+            }}
+        )
+
+@api_router.post("/forensics/analyze")
+async def start_forensic_analysis(
+    backup_file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Upload device backup and start forensic analysis
+    
+    Supports:
+    - .db files (WhatsApp msgstore.db, Telegram cache4.db, etc.)
+    - .tar archives (Android backup)
+    - .ab files (Android Backup format)
+    
+    Analysis runs in background, check status with /forensics/status/{case_id}
+    """
+    try:
+        # Generate unique case ID
+        case_id = f"CASE_{current_client['clientNumber']}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        
+        # Validate file type
+        file_ext = Path(backup_file.filename).suffix.lower()
+        allowed_extensions = ['.db', '.tar', '.gz', '.tgz', '.ab', '.zip']
+        
+        if file_ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported file type: {file_ext}. Allowed: {', '.join(allowed_extensions)}"
+            )
+        
+        # Save uploaded file
+        upload_dir = Path("/tmp/forensics_uploads")
+        upload_dir.mkdir(exist_ok=True, parents=True)
+        
+        file_path = upload_dir / f"{case_id}_{backup_file.filename}"
+        
+        with open(file_path, "wb") as buffer:
+            content = await backup_file.read()
+            buffer.write(content)
+        
+        file_size = len(content)
+        
+        print(f"[API] File uploaded: {file_path} ({file_size} bytes)")
+        
+        # Create forensic analysis record
+        analysis_record = {
+            "case_id": case_id,
+            "client_number": current_client["clientNumber"],
+            "client_email": current_client["email"],
+            "status": "processing",
+            "uploaded_file": str(file_path),
+            "file_name": backup_file.filename,
+            "file_size": file_size,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.forensic_analyses.insert_one(analysis_record)
+        
+        print(f"[API] Analysis record created: {case_id}")
+        
+        # Start analysis in background
+        background_tasks.add_task(
+            run_forensic_analysis_task,
+            file_path,
+            case_id,
+            {
+                "clientNumber": current_client["clientNumber"],
+                "email": current_client["email"],
+                "firstName": current_client.get("firstName", ""),
+                "lastName": current_client.get("lastName", "")
+            }
+        )
+        
+        print(f"[API] Background task scheduled: {case_id}")
+        
+        return {
+            "success": True,
+            "case_id": case_id,
+            "message": "Forensic analysis started. You will be notified when complete.",
+            "estimated_time": "5-15 minutes",
+            "status_url": f"/api/forensics/status/{case_id}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[API] Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/forensics/status/{case_id}")
+async def get_forensic_status(
+    case_id: str,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Get forensic analysis status
+    
+    Returns:
+    - status: "processing", "completed", or "failed"
+    - progress information
+    - statistics (if completed)
+    """
+    try:
+        analysis = await db.forensic_analyses.find_one({
+            "case_id": case_id,
+            "client_number": current_client["clientNumber"]
+        }, {"_id": 0})
+        
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Case not found")
+        
+        response = {
+            "case_id": case_id,
+            "status": analysis["status"],
+            "file_name": analysis.get("file_name"),
+            "file_size": analysis.get("file_size"),
+            "created_at": analysis["created_at"],
+            "updated_at": analysis["updated_at"]
+        }
+        
+        if analysis["status"] == "completed":
+            response["completed_at"] = analysis.get("completed_at")
+            response["statistics"] = analysis.get("statistics", {})
+            response["report_available"] = True
+        elif analysis["status"] == "failed":
+            response["error"] = analysis.get("error")
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/forensics/report/{case_id}")
+async def download_forensic_report(
+    case_id: str,
+    format: str = "txt",  # txt, html, pdf
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Download forensic report
+    
+    Formats:
+    - txt: Plain text report (default)
+    - html: HTML report (coming soon)
+    - pdf: PDF report (coming soon)
+    """
+    try:
+        analysis = await db.forensic_analyses.find_one({
+            "case_id": case_id,
+            "client_number": current_client["clientNumber"]
+        })
+        
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Case not found")
+        
+        if analysis["status"] != "completed":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Analysis not completed yet. Current status: {analysis['status']}"
+            )
+        
+        # Get report path based on format
+        report_key = f"report_{format}"
+        report_path = analysis.get(report_key)
+        
+        if not report_path:
+            report_path = analysis.get("report_txt")  # Fallback to txt
+            format = "txt"
+        
+        if not report_path or not Path(report_path).exists():
+            raise HTTPException(status_code=404, detail=f"Report file not found")
+        
+        # Determine media type
+        media_types = {
+            "txt": "text/plain",
+            "html": "text/html",
+            "pdf": "application/pdf"
+        }
+        
+        return FileResponse(
+            report_path,
+            media_type=media_types.get(format, "text/plain"),
+            filename=f"SafeChild_Report_{case_id}.{format}"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/forensics/my-cases")
+async def get_my_forensic_cases(
+    current_client: dict = Depends(get_current_client),
+    skip: int = 0,
+    limit: int = 50
+):
+    """
+    Get all forensic cases for current client
+    
+    Returns list of cases with status and statistics
+    """
+    try:
+        cases = await db.forensic_analyses.find(
+            {"client_number": current_client["clientNumber"]},
+            {"_id": 0}
+        ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+        
+        return {
+            "total": len(cases),
+            "cases": cases
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/forensics/case/{case_id}")
+async def delete_forensic_case(
+    case_id: str,
+    current_client: dict = Depends(get_current_client)
+):
+    """
+    Delete forensic case and associated files
+    
+    Only completed or failed cases can be deleted
+    """
+    try:
+        analysis = await db.forensic_analyses.find_one({
+            "case_id": case_id,
+            "client_number": current_client["clientNumber"]
+        })
+        
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Case not found")
+        
+        if analysis["status"] == "processing":
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot delete case while processing"
+            )
+        
+        # Delete files
+        if analysis.get("uploaded_file"):
+            try:
+                Path(analysis["uploaded_file"]).unlink(missing_ok=True)
+            except:
+                pass
+        
+        if analysis.get("report_txt"):
+            try:
+                Path(analysis["report_txt"]).unlink(missing_ok=True)
+            except:
+                pass
+        
+        # Delete from database
+        await db.forensic_analyses.delete_one({"case_id": case_id})
+        
+        return {"success": True, "message": "Case deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== ADMIN PANEL ====================
 
 @api_router.get("/admin/clients")
