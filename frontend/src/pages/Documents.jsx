@@ -14,7 +14,6 @@ const API = `${BACKEND_URL}/api`;
 
 const Documents = () => {
   const { language } = useLanguage();
-  const { toast } = useToast();
   const [activeMode, setActiveMode] = useState(null);
   const [clientNumber, setClientNumber] = useState('');
   const [fileNumber, setFileNumber] = useState('');
