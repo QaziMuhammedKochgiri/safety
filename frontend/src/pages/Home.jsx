@@ -199,10 +199,12 @@ const Home = () => {
                 ? 'Kontaktieren Sie uns heute für eine kostenlose Erstberatung. Unser Expertenteam steht bereit, Ihnen zu helfen.'
                 : 'Contact us today for a free initial consultation. Our expert team is ready to help you.'}
             </p>
-            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 shadow-xl hover:shadow-2xl transition-all">
-              {t(language, 'heroButton')}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <Link to="/book-consultation">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 shadow-xl hover:shadow-2xl transition-all">
+                {t(language, 'heroButton')}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
