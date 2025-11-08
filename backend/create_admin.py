@@ -39,7 +39,7 @@ async def create_admin():
             "firstName": "Admin",
             "lastName": "SafeChild",
             "email": admin_email,
-            "phone": "+31201234567",
+            "phone": "+9647700557879",
             "country": "Netherlands",
             "caseType": "admin",
             "hashedPassword": pwd_context.hash(admin_password),
