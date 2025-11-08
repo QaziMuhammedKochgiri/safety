@@ -135,6 +135,67 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Hague Convention Countries */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              {language === 'de' 
+                ? 'Haager Übereinkommen - Vertragsstaaten' 
+                : 'Hague Convention - Member States'}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              {language === 'de'
+                ? 'Wir sind spezialisiert auf internationale Kindschaftsrecht in allen Mitgliedsstaaten des Haager Übereinkommens über die zivilrechtlichen Aspekte internationaler Kindesentführung.'
+                : 'We specialize in international child custody law in all member states of the Hague Convention on the Civil Aspects of International Child Abduction.'}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">
+              {[
+                'Albania', 'Andorra', 'Argentina', 'Armenia', 'Australia', 'Austria', 
+                'Azerbaijan', 'Bahamas', 'Belarus', 'Belgium', 'Belize', 'Bolivia',
+                'Bosnia and Herzegovina', 'Brazil', 'Bulgaria', 'Burkina Faso', 'Canada', 'Chile',
+                'China (Hong Kong & Macao)', 'Colombia', 'Costa Rica', 'Croatia', 'Cyprus', 'Czech Republic',
+                'Denmark', 'Dominican Republic', 'Ecuador', 'El Salvador', 'Estonia', 'Fiji',
+                'Finland', 'France', 'Gabon', 'Georgia', 'Germany', 'Greece',
+                'Guatemala', 'Guyana', 'Honduras', 'Hungary', 'Iceland', 'India',
+                'Ireland', 'Israel', 'Italy', 'Jamaica', 'Japan', 'Kazakhstan',
+                'Latvia', 'Lesotho', 'Lithuania', 'Luxembourg', 'Malta', 'Mauritius',
+                'Mexico', 'Monaco', 'Mongolia', 'Montenegro', 'Morocco', 'Netherlands',
+                'New Zealand', 'Nicaragua', 'North Macedonia', 'Norway', 'Pakistan', 'Panama',
+                'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Republic of Korea',
+                'Republic of Moldova', 'Romania', 'Russian Federation', 'San Marino', 'Serbia', 'Seychelles',
+                'Singapore', 'Slovakia', 'Slovenia', 'South Africa', 'Spain', 'Sri Lanka',
+                'Sweden', 'Switzerland', 'Thailand', 'Trinidad and Tobago', 'Turkey', 'Turkmenistan',
+                'Ukraine', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Venezuela',
+                'Zimbabwe'
+              ].map((country, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center space-x-2 p-3 bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all"
+                >
+                  <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                  <span className="text-gray-700 font-medium">{country}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 p-6 bg-blue-50 rounded-xl border-l-4 border-blue-600">
+              <p className="text-sm text-gray-700">
+                <strong className="text-blue-900">
+                  {language === 'de' ? '📋 Hinweis:' : '📋 Note:'}
+                </strong>{' '}
+                {language === 'de'
+                  ? 'Das Haager Übereinkommen von 1980 ist ein internationales Abkommen zum Schutz von Kindern vor den schädlichen Auswirkungen einer widerrechtlichen Entführung oder Zurückhaltung über internationale Grenzen hinweg.'
+                  : 'The 1980 Hague Convention is an international treaty to protect children from the harmful effects of wrongful removal or retention across international borders.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Services Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
