@@ -188,7 +188,7 @@ async def change_password():
     hashed = pwd_context.hash(new_password)
     
     await db.clients.update_one(
-        {'email': 'admin@safechild.law'},
+        {'email': 'admin@safechild.mom'},
         {'\$set': {'hashedPassword': hashed}}
     )
     
