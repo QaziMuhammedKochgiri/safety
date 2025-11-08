@@ -115,9 +115,11 @@ const Header = () => {
                   <Globe className="w-4 h-4" />
                   <span className="font-semibold">{language.toUpperCase()}</span>
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  {t(language, 'contact')}
-                </Button>
+                <a href="mailto:info@safechild.mom">
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    {t(language, 'contact')}
+                  </Button>
+                </a>
               </div>
             </nav>
           </div>
