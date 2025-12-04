@@ -225,14 +225,13 @@ const AdminClients = () => {
                       <Button size="sm" variant="outline" onClick={() => handleEdit(client)}>
                         <Edit className="w-4 h-4" />
                       </Button>
-                      {/* New: Plan Data Collection Session Button */}
-                      <Button 
-                        size="sm" 
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={() => navigate(`/admin/meetings?clientNumber=${client.clientNumber}`)}
+                      <Button
+                        size="sm"
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        onClick={() => navigate(`/admin/data-collection?clientNumber=${client.clientNumber}`)}
                       >
-                        <span className="hidden md:inline">{language === 'de' ? 'Daten sammeln' : 'Collect Data'}</span>
-                        <Upload className="w-4 h-4 md:ml-2" />
+                        <Upload className="w-4 h-4 mr-1" />
+                        Veri Topla
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => handleDelete(client)}>
                         <Trash2 className="w-4 h-4 text-red-600" />

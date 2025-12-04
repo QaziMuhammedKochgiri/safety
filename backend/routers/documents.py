@@ -114,6 +114,37 @@ async def get_my_documents(current_client: dict = Depends(get_current_client), d
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/all")
+async def get_all_documents(db: AsyncIOMotorDatabase = Depends(get_db)):
+    """Get all documents (admin only)"""
+    try:
+        documents = await db.documents.find({}, {"_id": 0}).sort("uploadedAt", -1).to_list(length=None)
+        return {"documents": documents}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{document_number}")
+async def delete_document(document_number: str, db: AsyncIOMotorDatabase = Depends(get_db)):
+    """Delete a document by document number"""
+    try:
+        document = await db.documents.find_one({"documentNumber": document_number})
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        # Delete file from disk
+        file_path = Path(document.get('filePath', ''))
+        if file_path.exists():
+            file_path.unlink()
+
+        # Delete from database
+        await db.documents.delete_one({"documentNumber": document_number})
+
+        return {"success": True, "message": "Document deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/portal/upload")
 async def upload_my_document(
     file: UploadFile = File(...),

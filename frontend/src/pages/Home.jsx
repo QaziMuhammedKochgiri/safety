@@ -35,7 +35,7 @@ const Home = () => {
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1758389298577-87fed4a80ed2"
+            src="https://images.unsplash.com/photo-1536640712-4d4c36ff0e4e?w=1920&q=80"
             alt="Family silhouette"
             className="w-full h-full object-cover opacity-10"
           />
@@ -85,7 +85,7 @@ const Home = () => {
               <div className="relative">
                 <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl opacity-20 blur-2xl"></div>
                 <img
-                  src="https://images.unsplash.com/photo-1761628835064-32088526e123"
+                  src="https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=800&q=80"
                   alt="Parent and child embrace"
                   className="relative rounded-2xl shadow-2xl w-full h-[500px] object-cover"
                 />

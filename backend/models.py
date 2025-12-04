@@ -77,9 +77,12 @@ class Consent(BaseModel):
 # Chat Message Model
 class ChatMessageCreate(BaseModel):
     sessionId: str
-    sender: str  # "client", "bot", "lawyer"
+    sender: str  # "client", "bot", "agent"
     message: str
     clientNumber: Optional[str] = None
+    agentName: Optional[str] = None  # Name of the support agent
+    isMobile: Optional[bool] = None
+    language: Optional[str] = None
 
 class ChatMessage(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -87,6 +90,7 @@ class ChatMessage(BaseModel):
     clientNumber: Optional[str] = None
     sender: str
     message: str
+    agentName: Optional[str] = None  # Name of the support agent
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     isRead: bool = False
 

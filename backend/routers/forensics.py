@@ -1,24 +1,41 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, BackgroundTasks, Depends, Body
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, List
 import shutil
 import os
 import uuid
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from .. import get_db
-from ..auth import get_current_client
+from ..auth import get_current_client, get_current_admin
 from ..email_service import EmailService
-from backend.forensics.engine import SafeChildForensicsEngine # Adjust path as needed
+from backend.forensics.engine import SafeChildForensicsEngine
+from backend.forensics.analyzers import AIForensicAnalyzer, ChildSafetyRiskAssessor
 from backend.security_service import security_service
 import logging
 
 router = APIRouter(prefix="/forensics", tags=["Forensics"])
 logger = logging.getLogger(__name__)
 
-# Initialize forensics engine
+# Initialize forensics engine and AI analyzer
 forensics_engine = SafeChildForensicsEngine()
+ai_analyzer = AIForensicAnalyzer()
+child_safety_assessor = ChildSafetyRiskAssessor(ai_analyzer)
+
+
+# Pydantic models for AI analysis
+class AIAnalysisRequest(BaseModel):
+    case_id: str
+    language: str = "de"
+    include_safety_assessment: bool = True
+
+
+class CaseSummaryRequest(BaseModel):
+    case_id: str
+    language: str = "de"
 
 @router.post("/analyze-internal")
 async def analyze_internal_evidence(
@@ -490,10 +507,331 @@ async def delete_forensic_case(
                 pass
         
         await db.forensic_analyses.delete_one({"case_id": case_id})
-        
+
         return {"success": True, "message": "Case deleted successfully"}
-        
+
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========================================
+# AI-POWERED FORENSIC ANALYSIS ENDPOINTS
+# ========================================
+
+@router.post("/ai-analyze/{case_id}")
+async def run_ai_analysis(
+    case_id: str,
+    request: AIAnalysisRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Run AI-powered forensic analysis on a completed case.
+
+    This endpoint uses Claude API to analyze messages for:
+    - Threats and concerning language
+    - Manipulation and psychological abuse
+    - Parental alienation indicators
+    - Child safety concerns
+    - High-value evidence for court
+
+    Returns comprehensive risk assessment and recommendations.
+    """
+    try:
+        # Get the forensic analysis record
+        analysis = await db.forensic_analyses.find_one({"case_id": case_id})
+
+        if not analysis:
+            raise HTTPException(status_code=404, detail="Case not found")
+
+        if analysis["status"] != "completed":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Case analysis not completed. Status: {analysis['status']}"
+            )
+
+        # Get messages from the analysis (stored in statistics or separate collection)
+        messages = analysis.get("extracted_messages", [])
+
+        # If no messages in analysis, try to get from messages collection
+        if not messages:
+            msg_cursor = db.forensic_messages.find({"case_id": case_id})
+            messages = await msg_cursor.to_list(length=None)
+
+        # Prepare context for AI analysis
+        context = {
+            "case_id": case_id,
+            "client_number": analysis.get("client_number"),
+            "analysis_type": analysis.get("analysis_type"),
+            "file_name": analysis.get("file_name"),
+            "created_at": str(analysis.get("created_at"))
+        }
+
+        # Run AI analysis
+        logger.info(f"Starting AI analysis for case {case_id}")
+        ai_result = await ai_analyzer.analyze_messages(
+            messages=messages,
+            context=context,
+            language=request.language
+        )
+
+        # Optionally run child safety assessment
+        safety_assessment = None
+        if request.include_safety_assessment and ai_result.get("success"):
+            safety_assessment = await child_safety_assessor.assess_child_safety(
+                forensic_data={"ai_analysis": ai_result},
+                case_context=context,
+                language=request.language
+            )
+
+        # Store AI analysis results
+        ai_analysis_record = {
+            "case_id": case_id,
+            "analysis_date": datetime.utcnow(),
+            "language": request.language,
+            "ai_results": ai_result,
+            "safety_assessment": safety_assessment
+        }
+
+        # Update or insert AI analysis
+        await db.ai_forensic_analyses.update_one(
+            {"case_id": case_id},
+            {"$set": ai_analysis_record},
+            upsert=True
+        )
+
+        # Update main analysis record with AI flag
+        await db.forensic_analyses.update_one(
+            {"case_id": case_id},
+            {
+                "$set": {
+                    "ai_analyzed": True,
+                    "ai_analysis_date": datetime.utcnow(),
+                    "ai_risk_score": ai_result.get("overall_risk_score"),
+                    "ai_risk_level": ai_result.get("risk_level")
+                }
+            }
+        )
+
+        return {
+            "success": True,
+            "case_id": case_id,
+            "ai_analysis": ai_result,
+            "safety_assessment": safety_assessment,
+            "message": "AI analysis completed successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"AI analysis error for {case_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ai-analysis/{case_id}")
+async def get_ai_analysis(
+    case_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Get AI analysis results for a case.
+    """
+    try:
+        ai_analysis = await db.ai_forensic_analyses.find_one(
+            {"case_id": case_id},
+            {"_id": 0}
+        )
+
+        if not ai_analysis:
+            raise HTTPException(
+                status_code=404,
+                detail="AI analysis not found. Run /ai-analyze first."
+            )
+
+        return ai_analysis
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/ai-summary/{case_id}")
+async def generate_ai_case_summary(
+    case_id: str,
+    request: CaseSummaryRequest,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Generate AI-powered case summary for court proceedings.
+
+    Uses Claude to create a professional legal summary including:
+    - Executive summary
+    - Key findings
+    - Risk assessment
+    - Evidence highlights
+    - Recommended actions
+    """
+    try:
+        # Get AI analysis
+        ai_analysis = await db.ai_forensic_analyses.find_one({"case_id": case_id})
+
+        if not ai_analysis:
+            raise HTTPException(
+                status_code=404,
+                detail="AI analysis not found. Run /ai-analyze first."
+            )
+
+        # Get case info
+        forensic_record = await db.forensic_analyses.find_one({"case_id": case_id})
+
+        case_info = {
+            "case_id": case_id,
+            "client_number": forensic_record.get("client_number"),
+            "file_name": forensic_record.get("file_name"),
+            "created_at": str(forensic_record.get("created_at")),
+            "completed_at": str(forensic_record.get("completed_at"))
+        }
+
+        # Generate summary
+        summary_result = await ai_analyzer.generate_case_summary(
+            analysis_result=ai_analysis.get("ai_results", {}),
+            case_info=case_info,
+            language=request.language
+        )
+
+        if summary_result.get("success"):
+            # Store the summary
+            await db.ai_forensic_analyses.update_one(
+                {"case_id": case_id},
+                {
+                    "$set": {
+                        f"case_summary_{request.language}": summary_result["summary"],
+                        "summary_generated_at": datetime.utcnow()
+                    }
+                }
+            )
+
+        return {
+            "success": True,
+            "case_id": case_id,
+            "summary": summary_result.get("summary"),
+            "language": request.language,
+            "generated_at": summary_result.get("generated_at")
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Summary generation error for {case_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/all-cases")
+async def get_all_forensic_cases(
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[str] = None,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Get all forensic cases (Admin endpoint).
+    """
+    try:
+        query = {}
+        if status:
+            query["status"] = status
+
+        cases = await db.forensic_analyses.find(
+            query,
+            {"_id": 0}
+        ).sort("created_at", -1).skip(skip).limit(limit).to_list(length=None)
+
+        total = await db.forensic_analyses.count_documents(query)
+
+        # Get AI analysis status for each case
+        for case in cases:
+            ai_analysis = await db.ai_forensic_analyses.find_one(
+                {"case_id": case["case_id"]},
+                {"_id": 0, "ai_results.overall_risk_score": 1, "ai_results.risk_level": 1}
+            )
+            if ai_analysis:
+                case["ai_analyzed"] = True
+                case["ai_risk_score"] = ai_analysis.get("ai_results", {}).get("overall_risk_score")
+                case["ai_risk_level"] = ai_analysis.get("ai_results", {}).get("risk_level")
+            else:
+                case["ai_analyzed"] = False
+
+        return {
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "cases": cases
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/risk-dashboard")
+async def get_risk_dashboard(
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Get AI risk analysis dashboard data.
+
+    Returns aggregated risk statistics across all analyzed cases.
+    """
+    try:
+        # Get all AI analyses
+        ai_analyses = await db.ai_forensic_analyses.find(
+            {},
+            {"_id": 0, "case_id": 1, "ai_results": 1, "safety_assessment": 1, "analysis_date": 1}
+        ).to_list(length=None)
+
+        # Calculate statistics
+        total_analyzed = len(ai_analyses)
+
+        risk_levels = {"critical": 0, "high": 0, "medium": 0, "low": 0, "minimal": 0}
+        total_flagged = 0
+        risk_category_counts = {}
+
+        for analysis in ai_analyses:
+            ai_results = analysis.get("ai_results", {})
+
+            # Count risk levels
+            level = ai_results.get("risk_level", "unknown")
+            if level in risk_levels:
+                risk_levels[level] += 1
+
+            # Count flagged messages
+            total_flagged += ai_results.get("flagged_count", 0)
+
+            # Count risk categories
+            for cat, score in ai_results.get("risk_summary", {}).items():
+                if score >= 20:  # Only count if risk is detected
+                    risk_category_counts[cat] = risk_category_counts.get(cat, 0) + 1
+
+        # Get cases requiring immediate attention
+        urgent_cases = [
+            {
+                "case_id": a["case_id"],
+                "risk_score": a.get("ai_results", {}).get("overall_risk_score"),
+                "analysis_date": a.get("analysis_date")
+            }
+            for a in ai_analyses
+            if a.get("ai_results", {}).get("risk_level") in ["critical", "high"]
+        ]
+
+        return {
+            "total_analyzed": total_analyzed,
+            "risk_distribution": risk_levels,
+            "total_flagged_messages": total_flagged,
+            "risk_categories": risk_category_counts,
+            "urgent_cases": urgent_cases[:10],  # Top 10 urgent cases
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -9,6 +9,16 @@ logger = logging.getLogger(__name__)
 # Initialize Resend with API key
 resend.api_key = os.environ.get('RESEND_API_KEY')
 
+# Type mapping for display
+TYPE_DISPLAY_NAMES = {
+    "whatsapp": "WhatsApp Messages",
+    "telegram": "Telegram Messages",
+    "photos": "Photos & Media",
+    "sms": "SMS Messages",
+    "calls": "Call Logs",
+    "any": "Any Evidence Files"
+}
+
 class EmailService:
     """Service for sending transactional emails through Resend."""
     
@@ -472,6 +482,130 @@ info@safechild.mom
         return EmailService.send_email(
             to=[recipient_email],
             subject="Willkommen bei SafeChild Law",
+            html=html_content,
+            text=text_content
+        )
+
+    @staticmethod
+    def send_magic_link_email(
+        recipient_email: str,
+        recipient_name: str,
+        magic_link: str,
+        requested_types: List[str],
+        expires_at: datetime
+    ) -> Dict:
+        """Send magic link email for evidence upload."""
+
+        # Format requested types for display
+        types_display = ", ".join([TYPE_DISPLAY_NAMES.get(t, t) for t in requested_types])
+        expires_formatted = expires_at.strftime("%d.%m.%Y um %H:%M Uhr")
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 28px;">SafeChild Law</h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Sichere Beweisübermittlung</p>
+            </div>
+
+            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #4f46e5; margin-top: 0;">Anfrage zur Beweisübermittlung</h2>
+
+                <p style="font-size: 16px;">Hallo {recipient_name},</p>
+
+                <p style="font-size: 16px;">Ihr Rechtsanwalt hat Sie gebeten, folgende Beweise sicher hochzuladen:</p>
+
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6366f1;">
+                    <p style="margin: 5px 0;"><strong>Angeforderte Daten:</strong></p>
+                    <p style="margin: 5px 0; color: #4f46e5;">{types_display}</p>
+                    <p style="margin: 15px 0 5px 0;"><strong>Link gültig bis:</strong></p>
+                    <p style="margin: 5px 0; color: #dc2626;">{expires_formatted}</p>
+                </div>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{magic_link}" style="background: #6366f1; color: white; padding: 15px 40px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">
+                        Beweise Hochladen
+                    </a>
+                </div>
+
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 14px;"><strong>Wichtige Hinweise:</strong></p>
+                    <ul style="margin: 10px 0 0 0; padding-left: 20px; font-size: 14px;">
+                        <li>Dieser Link ist nur für Sie bestimmt</li>
+                        <li>Teilen Sie diesen Link nicht mit Dritten</li>
+                        <li>Alle hochgeladenen Daten werden verschlüsselt</li>
+                        <li>Der Link ist nach dem Ablaufdatum nicht mehr gültig</li>
+                    </ul>
+                </div>
+
+                <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 14px;"><strong>So funktioniert es:</strong></p>
+                    <ol style="margin: 10px 0 0 0; padding-left: 20px; font-size: 14px;">
+                        <li>Klicken Sie auf "Beweise Hochladen"</li>
+                        <li>Wählen Sie die gewünschten Dateien aus</li>
+                        <li>Bestätigen Sie den Upload</li>
+                        <li>Sie erhalten eine Bestätigung per E-Mail</li>
+                    </ol>
+                </div>
+
+                <p style="font-size: 16px; margin-top: 30px;">
+                    Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.
+                </p>
+
+                <p style="font-size: 16px; margin-top: 30px;">
+                    Mit freundlichen Grüßen,<br>
+                    <strong>Ihr SafeChild Law Team</strong>
+                </p>
+            </div>
+
+            <div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
+                <p>SafeChild Rechtsanwaltskanzlei</p>
+                <p>Sichere Beweisübermittlung • DSGVO-konform • Ende-zu-Ende verschlüsselt</p>
+                <p style="margin-top: 15px;">
+                    <a href="mailto:info@safechild.mom" style="color: #6366f1; text-decoration: none;">info@safechild.mom</a>
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+SafeChild Law - Anfrage zur Beweisübermittlung
+
+Hallo {recipient_name},
+
+Ihr Rechtsanwalt hat Sie gebeten, folgende Beweise sicher hochzuladen:
+
+Angeforderte Daten: {types_display}
+Link gültig bis: {expires_formatted}
+
+Klicken Sie auf folgenden Link, um Ihre Beweise hochzuladen:
+{magic_link}
+
+Wichtige Hinweise:
+- Dieser Link ist nur für Sie bestimmt
+- Teilen Sie diesen Link nicht mit Dritten
+- Alle hochgeladenen Daten werden verschlüsselt
+- Der Link ist nach dem Ablaufdatum nicht mehr gültig
+
+Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.
+
+Mit freundlichen Grüßen,
+Ihr SafeChild Law Team
+
+---
+SafeChild Rechtsanwaltskanzlei
+info@safechild.mom
+        """
+
+        return EmailService.send_email(
+            to=[recipient_email],
+            subject="SafeChild: Anfrage zur Beweisübermittlung",
             html=html_content,
             text=text_content
         )

@@ -3,8 +3,8 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Use relative path - nginx will proxy to backend
+const API = '/api';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -46,16 +46,21 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post(`${API}/auth/login`, { email, password });
       const { access_token, clientNumber, firstName, lastName } = response.data;
-      
+
       localStorage.setItem('safechild-token', access_token);
       setToken(access_token);
-      setUser({ clientNumber, email, firstName, lastName });
-      
-      return { success: true };
+
+      // Fetch full user info including role
+      const userResponse = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      setUser(userResponse.data);
+
+      return { success: true, role: userResponse.data.role };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Login failed' 
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Login failed'
       };
     }
   };

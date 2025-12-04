@@ -1,48 +1,87 @@
+# =============================================================================
+# SafeChild .gitignore
+# =============================================================================
+
 # Node modules
 node_modules/
 frontend/node_modules/
+whatsapp-service/node_modules/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
 backend/__pycache__/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
 
-# Environment variables
+# Environment variables (NEVER commit these!)
 .env
+.env.local
+.env.*.local
 backend/.env
 frontend/.env
+whatsapp-service/.env
+telegram-service/.env
 
 # Logs
 *.log
-backend/uploads/
 logs/
+backend/uploads/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+*.swp
+*~
 
 # IDE
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 
-# Build
+# Build artifacts
 frontend/build/
 dist/
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
+build/
+
+# Docker
+*.tar
+mongo-data/
+
+# SSL Certificates (use secrets management in production)
+certs/*.key
+certs/*.pem
+certs/*.crt
+
+# Forensics uploads (sensitive data)
+/tmp/forensics_uploads/
+
+# WhatsApp session data
+whatsapp-service/.wwebjs_auth/
+whatsapp-service/.wwebjs_cache/
+
+# Telegram session data
+telegram-service/sessions/
+telegram-service/*.session
+
+# Test artifacts
+.tox/
+.nox/
+junit.xml
+
+# Misc
 wallet.txt
+*.Zone.Identifier
+tum_proje_kodlari.txt
+hazirla.py
+mimari.txt

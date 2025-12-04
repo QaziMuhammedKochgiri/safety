@@ -15,8 +15,8 @@ ENV REACT_APP_BACKEND_URL=
 # Copy the rest of the frontend application's code
 COPY frontend/ ./
 
-# Build the application
-RUN yarn build
+# Build the application using craco with node directly (symlink issues in Docker Alpine)
+RUN node node_modules/@craco/craco/dist/bin/craco.js build
 
 # Stage 2: Serve the application using a lightweight web server
 FROM nginx:1.21.6-alpine

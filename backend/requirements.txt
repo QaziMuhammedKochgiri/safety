@@ -75,3 +75,4 @@ reportlab==4.4.4
 resend==2.19.0
 httpx
 pytest-asyncio
+anthropic>=0.40.0

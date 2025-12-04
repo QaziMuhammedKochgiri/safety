@@ -1,6 +1,7 @@
-version: '3.8'
-
 services:
+  # =============================================================================
+  # NGINX Gateway - Reverse Proxy & SSL Termination
+  # =============================================================================
   gateway:
     image: nginx:1.25.3-alpine
     restart: always
@@ -18,9 +19,19 @@ services:
     networks:
       - safechild-net
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =============================================================================
+  # Frontend - React Application
+  # =============================================================================
   frontend:
     build:
       context: .
@@ -31,12 +42,15 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-    # Ports removed, only accessible via gateway
     networks:
       - safechild-net
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
+  # =============================================================================
+  # Backend - FastAPI Application
+  # =============================================================================
   backend:
     build:
       context: .
@@ -45,26 +59,42 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 512M
-    # Ports removed, only accessible via gateway
+          cpus: '1.5'
+          memory: 1024M
     env_file:
       - .env
     environment:
-      - MONGO_URL=mongodb://mongo:27017/safechild_db
+      - MONGO_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-changeme}@mongo:27017/${DB_NAME:-safechild_db}?authSource=admin
+      - ENVIRONMENT=production
+      - LOG_FORMAT=json
+    volumes:
+      - forensics-uploads:/tmp/forensics_uploads
     networks:
       - safechild-net
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # =============================================================================
+  # Backend Test Runner (for CI/CD)
+  # =============================================================================
   backend-test:
     build:
       context: .
       dockerfile: Dockerfile
+    profiles:
+      - test
     env_file:
       - .env
     environment:
-      - MONGO_URL=mongodb://mongo:27017/safechild_test_db
+      - MONGO_URL=mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-changeme}@mongo:27017/safechild_test_db?authSource=admin
+      - ENVIRONMENT=test
     networks:
       - safechild-net
     depends_on:
@@ -73,9 +103,12 @@ services:
     command: >
       sh -c "
         export PYTHONPATH=/app &&
-        /opt/venv/bin/pytest
+        /opt/venv/bin/pytest -v --tb=short
       "
 
+  # =============================================================================
+  # WhatsApp Service - WhatsApp Web Automation
+  # =============================================================================
   whatsapp-service:
     build:
       context: ./whatsapp-service
@@ -83,16 +116,28 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 256M
-    # Ports removed for security, only accessible via gateway
+          cpus: '1.0'
+          memory: 512M
+    environment:
+      - NODE_ENV=production
+      - BACKEND_URL=http://backend:8001
     volumes:
-      - /tmp/forensics_uploads:/tmp/forensics_uploads
+      - forensics-uploads:/tmp/forensics_uploads
+      - whatsapp-sessions:/app/.wwebjs_auth
     networks:
       - safechild-net
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =============================================================================
+  # Telegram Service - Telegram API Integration
+  # =============================================================================
   telegram-service:
     build:
       context: ./telegram-service
@@ -102,25 +147,41 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-    # Ports removed for security, only accessible via gateway
+    environment:
+      - BACKEND_URL=http://backend:8001
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID:-}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH:-}
     volumes:
-      - /tmp/forensics_uploads:/tmp/forensics_uploads
+      - forensics-uploads:/tmp/forensics_uploads
+      - telegram-sessions:/app/sessions
     networks:
       - safechild-net
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # =============================================================================
+  # MongoDB Database
+  # =============================================================================
   mongo:
-    image: mongo:latest
+    image: mongo:7.0.5
     restart: always
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
-    # Ports removed for security, only backend can access
+          cpus: '1.0'
+          memory: 1024M
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-changeme}
     volumes:
       - mongo-data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
     networks:
       - safechild-net
     healthcheck:
@@ -128,13 +189,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
 
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
   safechild-net:
     driver: bridge
 
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
   mongo-data:
-
-
+    driver: local
+  forensics-uploads:
+    driver: local
+  whatsapp-sessions:
+    driver: local
+  telegram-sessions:
+    driver: local

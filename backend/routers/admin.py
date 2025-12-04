@@ -1,14 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends
-from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, Depends, Body
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pathlib import Path
 
 from .. import get_db
-from ..auth import get_current_admin
+from ..auth import get_current_admin, get_password_hash
 
 router = APIRouter(prefix="/admin", tags=["Admin Panel"])
 
-@router.post("/clients/create")
+
+@router.post("/clients")
 async def admin_create_client(
     client_data: dict,
     current_admin: dict = Depends(get_current_admin),

@@ -75,3 +75,7 @@ async def get_current_admin(current_client: dict = Depends(get_current_client)) 
             detail="Admin access required"
         )
     return current_client
+
+# Aliases for get_current_client - used by some routers
+get_current_user = get_current_client
+get_current_admin_user = get_current_admin

@@ -26,6 +26,21 @@ async def log_consent(consent_data: ConsentCreate, request: Request, db: AsyncIO
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/logs")
+async def get_all_consent_logs(db: AsyncIOMotorDatabase = Depends(get_db)):
+    """Get all consent logs (admin only)"""
+    try:
+        logs = await db.consents.find({}).sort("timestamp", -1).to_list(length=None)
+        # Convert ObjectId to string for JSON serialization
+        for log in logs:
+            if "_id" in log:
+                log["_id"] = str(log["_id"])
+            if "timestamp" in log:
+                log["timestamp"] = log["timestamp"].isoformat() if hasattr(log["timestamp"], 'isoformat') else str(log["timestamp"])
+        return {"logs": logs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/{session_id}")
 async def get_consent(session_id: str, db: AsyncIOMotorDatabase = Depends(get_db)):
     """Get consent details for a session"""

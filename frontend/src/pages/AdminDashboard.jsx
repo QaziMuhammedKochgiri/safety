@@ -5,9 +5,10 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { toast } from 'sonner';
-import { 
-  Users, FileText, Shield, MessageSquare, 
-  LogOut, TrendingUp, Activity, Eye, Video, Fingerprint
+import {
+  Users, FileText, Shield, MessageSquare,
+  LogOut, TrendingUp, Activity, Eye, Video, Fingerprint,
+  FileSearch, Database, Headphones
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -291,6 +292,30 @@ const AdminDashboard = () => {
               >
                 <MessageSquare className="w-8 h-8" />
                 <span>{language === 'de' ? 'Nachrichten' : 'Messages'}</span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/admin/verification')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-red-600 hover:bg-red-700"
+              >
+                <FileSearch className="w-8 h-8" />
+                <span>{language === 'de' ? 'Aussagenprüfung' : 'Beyan Doğrulama'}</span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/admin/data-collection')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-teal-600 hover:bg-teal-700"
+              >
+                <Database className="w-8 h-8" />
+                <span>{language === 'de' ? 'Datensammlung' : 'Veri Toplama'}</span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/admin/live-chat')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-pink-600 hover:bg-pink-700"
+              >
+                <Headphones className="w-8 h-8" />
+                <span>{language === 'de' ? 'Live-Support' : 'Canli Destek'}</span>
               </Button>
             </div>
           </CardContent>

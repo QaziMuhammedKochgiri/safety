@@ -12,8 +12,8 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install build dependencies required for compiling packages like pytsk3
-RUN apt-get update && apt-get install -y build-essential libtsk-dev libsqlite3-dev zlib1g-dev
+# Install build dependencies required for compiling packages like pytsk3 and curl for health checks
+RUN apt-get update && apt-get install -y build-essential libtsk-dev libsqlite3-dev zlib1g-dev curl
 
 # Copy the requirements file into the container at /app
 COPY backend/requirements.txt /app/

@@ -1,0 +1,9 @@
+# This file should NOT be checked into git
+# Create local.properties with your actual SDK path
+
+# Example paths:
+# Windows: sdk.dir=C\:\\Users\\USERNAME\\AppData\\Local\\Android\\Sdk
+# macOS: sdk.dir=/Users/USERNAME/Library/Android/sdk
+# Linux: sdk.dir=/home/USERNAME/Android/Sdk
+
+sdk.dir=/path/to/your/android/sdk

@@ -21,12 +21,17 @@ const Login = () => {
     setLoading(true);
 
     const result = await login(formData.email, formData.password);
-    
+
     if (result.success) {
       toast.success(
         language === 'de' ? 'Erfolgreich angemeldet' : 'Successfully logged in'
       );
-      navigate('/portal');
+      // Redirect based on role
+      if (result.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/portal');
+      }
     } else {
       toast.error(
         language === 'de' ? 'Anmeldung fehlgeschlagen' : 'Login failed',
