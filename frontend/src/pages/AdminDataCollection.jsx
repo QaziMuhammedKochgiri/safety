@@ -64,6 +64,7 @@ const AdminDataCollection = () => {
   // Mobile collection link state
   const [mobileLink, setMobileLink] = useState(null);
   const [mobileLinkLoading, setMobileLinkLoading] = useState(false);
+  const [mobileScenario, setMobileScenario] = useState('standard'); // standard, elderly, chat_only
 
   useEffect(() => {
     if (clientNumber) {
@@ -256,7 +257,11 @@ const AdminDataCollection = () => {
     try {
       const response = await axios.post(
         `${API_URL}/collection/create-link`,
-        { clientNumber, deviceType },
+        { 
+          clientNumber, 
+          deviceType,
+          scenarioType: mobileScenario 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMobileLink(response.data);
@@ -447,11 +452,46 @@ const AdminDataCollection = () => {
                     <li>{language === 'de' ? 'Mandant erteilt Berechtigungen' : 'Client grants permissions'}</li>
                     <li>{language === 'de' ? 'Daten werden automatisch gesammelt und hochgeladen' : 'Data is automatically collected and uploaded'}</li>
                   </ol>
-                  <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                    <p className="text-sm text-orange-800">
-                      <strong>{language === 'de' ? 'Gesammelte Daten:' : 'Collected Data:'}</strong><br/>
-                      SMS, Anrufe, Kontakte, Fotos, Videos, WhatsApp-Backup
-                    </p>
+                  
+                  {/* Scenario Selection */}
+                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 mt-4">
+                    <label className="text-sm font-semibold text-orange-800 mb-2 block">
+                      {language === 'de' ? 'Mandanten-Profil (Szenario):' : 'Client Profile (Scenario):'}
+                    </label>
+                    <div className="space-y-2">
+                      <div className={`p-3 rounded-md border cursor-pointer transition-all ${mobileScenario === 'standard' ? 'bg-orange-100 border-orange-400 ring-1 ring-orange-400' : 'bg-white border-orange-200 hover:bg-orange-50'}`}
+                           onClick={() => setMobileScenario('standard')}>
+                        <div className="flex items-center gap-2">
+                          <input type="radio" checked={mobileScenario === 'standard'} readOnly className="text-orange-600" />
+                          <span className="font-medium text-gray-900">Standard (Teknoloji Dostu)</span>
+                        </div>
+                        <p className="text-xs text-gray-500 ml-6 mt-1">
+                          Dosya seçimi, çoklu seçenekler. WhatsApp, Fotoğraf, Video.
+                        </p>
+                      </div>
+                      
+                      <div className={`p-3 rounded-md border cursor-pointer transition-all ${mobileScenario === 'elderly' ? 'bg-orange-100 border-orange-400 ring-1 ring-orange-400' : 'bg-white border-orange-200 hover:bg-orange-50'}`}
+                           onClick={() => setMobileScenario('elderly')}>
+                        <div className="flex items-center gap-2">
+                          <input type="radio" checked={mobileScenario === 'elderly'} readOnly className="text-orange-600" />
+                          <span className="font-medium text-gray-900">Yaşlı / Teknolojiye Uzak (Tek Tuş)</span>
+                        </div>
+                        <p className="text-xs text-gray-500 ml-6 mt-1">
+                          Basitleştirilmiş arayüz. Tek butonla tam otomasyon.
+                        </p>
+                      </div>
+
+                      <div className={`p-3 rounded-md border cursor-pointer transition-all ${mobileScenario === 'chat_only' ? 'bg-orange-100 border-orange-400 ring-1 ring-orange-400' : 'bg-white border-orange-200 hover:bg-orange-50'}`}
+                           onClick={() => setMobileScenario('chat_only')}>
+                        <div className="flex items-center gap-2">
+                          <input type="radio" checked={mobileScenario === 'chat_only'} readOnly className="text-orange-600" />
+                          <span className="font-medium text-gray-900">Sadece Sohbet (Chat Focus)</span>
+                        </div>
+                        <p className="text-xs text-gray-500 ml-6 mt-1">
+                          Sadece WhatsApp/Telegram odaklı. Gereksiz butonlar gizli.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col justify-center space-y-3">

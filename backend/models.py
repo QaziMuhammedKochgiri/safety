@@ -182,6 +182,7 @@ class EvidenceRequest(BaseModel):
     clientNumber: str
     lawyerId: str # Which admin created this request
     requestedTypes: List[str] = [] # e.g. ["photos", "documents", "whatsapp_backup"]
+    scenario_type: Optional[str] = "standard"  # standard (tech_savvy), elderly (one-click), chat_only
     status: str = "pending" # pending, completed, expired
     expiresAt: datetime
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

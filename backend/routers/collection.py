@@ -81,6 +81,7 @@ async def create_collection_link(
         "clientName": f"{client.get('firstName', '')} {client.get('lastName', '')}".strip(),
         "clientPhone": client.get("phone"),
         "deviceType": data.get("deviceType", "android"),
+        "scenario_type": data.get("scenarioType", "standard"), # standard, elderly, chat_only
         "lawyerId": str(current_user.get("clientNumber", "admin")),
         "status": "pending",
         "expiresAt": datetime.utcnow() + timedelta(hours=48),  # 48 hour expiry
@@ -101,7 +102,8 @@ async def create_collection_link(
     logger.info(f"Mobile collection link created", extra={"extra_fields": {
         "client_number": client_number,
         "short_code": short_code,
-        "device_type": request_record["deviceType"]
+        "device_type": request_record["deviceType"],
+        "scenario_type": request_record["scenario_type"]
     }})
 
     return {
@@ -141,7 +143,8 @@ async def validate_collection_token(
         "isValid": True,
         "clientNumber": req["clientNumber"],
         "clientName": req.get("clientName", "Client"),
-        "deviceType": req["deviceType"]
+        "deviceType": req["deviceType"],
+        "scenario_type": req.get("scenario_type", "standard")
     }
 
 

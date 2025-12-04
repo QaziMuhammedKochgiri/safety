@@ -124,11 +124,15 @@ export const adminService = {
     return response.data;
   },
 
-  createMagicLink: async (clientNumber, types) => {
-    const response = await api.post('/requests/create', {
-      clientNumber,
-      types
-    });
+  createMagicLink: async (data) => {
+    // data: { client_number, request_type, expiry_days, notes, scenario_type }
+    const response = await api.post('/requests/create', data);
+    return response.data;
+  },
+  
+  createCollectionLink: async (data) => {
+    // data: { clientNumber, deviceType, sendSms, scenarioType }
+    const response = await api.post('/collection/create-link', data);
     return response.data;
   }
 };

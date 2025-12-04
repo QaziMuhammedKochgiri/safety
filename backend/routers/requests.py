@@ -21,81 +21,63 @@ router = APIRouter(prefix="/requests", tags=["Evidence Requests"])
 logger = get_logger("safechild.requests")
 
 
+class CreateRequestModel(BaseModel):
+    client_number: str
+    case_id: Optional[str] = None
+    request_type: str = "upload"  # upload, consent, info
+    scenario_type: Optional[str] = "standard"  # standard, elderly, chat_only
+    expiry_days: int = 7
+    notes: Optional[str] = ""
+
 @router.post("/create")
 async def create_evidence_request(
-    data: dict = Body(...),
+    request: CreateRequestModel,
     current_user: dict = Depends(get_current_admin),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    """
-    Lawyer creates a magic link request for a client.
-    Data: {
-        "clientNumber": "123",
-        "types": ["photos", "whatsapp", "telegram"],
-        "sendEmail": true  # Optional: send email notification
-    }
-    """
-    client_number = data.get("clientNumber")
-    if not client_number:
-        raise HTTPException(status_code=400, detail="clientNumber is required")
-
-    # Get client info
-    client = await db.clients.find_one({"clientNumber": client_number})
+    """Create a new evidence request link"""
+    
+    # Check if client exists
+    client = await db.clients.find_one({"clientNumber": request.client_number})
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-
-    # Generate a unique, secure token (URL-safe)
-    token = uuid.uuid4().hex
-
+        
+    # Generate unique token
+    token = secrets.token_urlsafe(32)
+    
+    # Calculate expiry
+    expires_at = datetime.utcnow() + timedelta(days=request.expiry_days)
+    
     request_record = {
-        "id": str(uuid.uuid4()),
-        "token": token,
-        "clientNumber": client_number,
-        "clientEmail": client.get("email"),
-        "clientName": f"{client.get('firstName', '')} {client.get('lastName', '')}".strip(),
-        "lawyerId": str(current_user.get("clientNumber", "admin")),
-        "requestedTypes": data.get("types", ["any"]),
+        "client_number": request.client_number,
+        "case_id": request.case_id,
+        "request_type": request.request_type,
         "status": "pending",
-        "expiresAt": datetime.utcnow() + timedelta(days=7),
-        "createdAt": datetime.utcnow(),
-        "uploadCount": 0,
-        "lastUploadAt": None
-    }
-
-    await db.evidence_requests.insert_one(request_record)
-
-    # Build full magic link URL
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-    magic_link = f"{frontend_url}/upload-evidence/{token}"
-
-    logger.info(f"Magic link created for client {client_number}", extra={"extra_fields": {
-        "client_number": client_number,
-        "token_prefix": token[:8],
-        "requested_types": request_record["requestedTypes"]
-    }})
-
-    # Send email notification if requested
-    if data.get("sendEmail", True) and client.get("email"):
-        try:
-            email_result = EmailService.send_magic_link_email(
-                recipient_email=client.get("email"),
-                recipient_name=request_record["clientName"] or "Valued Client",
-                magic_link=magic_link,
-                requested_types=request_record["requestedTypes"],
-                expires_at=request_record["expiresAt"]
-            )
-            if email_result.get("success"):
-                logger.info(f"Magic link email sent to {client.get('email')}")
-            else:
-                logger.warning(f"Failed to send magic link email: {email_result.get('error')}")
-        except Exception as e:
-            logger.error(f"Error sending magic link email: {e}")
-
-    return {
-        "success": True,
-        "magic_link": magic_link,
+        "created_at": datetime.utcnow().isoformat(),
+        "expires_at": expires_at.isoformat(),
         "token": token,
-        "expiresAt": request_record["expiresAt"].isoformat()
+        "scenario_type": request.scenario_type,
+        "created_by": current_user.get("email"),
+        "notes": request.notes
+    }
+    
+    await db.evidence_requests.insert_one(request_record)
+    
+    # Generate link
+    base_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    
+    # Use short URL for mobile collection
+    if request.request_type == "mobile_collection":
+        link = f"{base_url}/c/{token}"
+    else:
+        link = f"{base_url}/upload-request/{token}"
+    
+    return {
+        "success": True, 
+        "link": link,
+        "token": token,
+        "expires_at": expires_at.isoformat(),
+        "scenario_type": request.scenario_type
     }
 
 
