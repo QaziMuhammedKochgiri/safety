@@ -168,30 +168,69 @@ const MobileCollect = () => {
             Merhaba{clientInfo?.clientName ? `, ${clientInfo.clientName.split(' ')[0]}` : ''}
           </CardTitle>
           <p className="text-lg text-gray-600 mt-2">
-            Verilerinizi güvenle göndermek için lütfen aşağıdaki <strong>MAVİ</strong> butona basın.
+            Fotoğraflarınızı göndermek için aşağıdaki <strong>MAVİ</strong> butona basın.
           </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-4">
-          
+
+          {/* Photo Upload - Primary Action */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-            <p className="text-blue-800 font-medium mb-4">Otomatik Toplama Aracı</p>
-            <Button 
-              className="w-full h-24 text-xl bg-blue-600 hover:bg-blue-700 shadow-lg rounded-2xl animate-pulse"
-              onClick={() => window.location.href = clientInfo?.apkDownloadLink || '#'}
+            <p className="text-blue-800 font-medium mb-4">Fotoğraf Gönder</p>
+            <Button
+              className="w-full h-24 text-xl bg-blue-600 hover:bg-blue-700 shadow-lg rounded-2xl"
+              onClick={handlePhotoSelect}
+              disabled={uploading === 'photos'}
             >
-              <Smartphone className="w-10 h-10 mr-3" />
-              YARDIMCIYI BAŞLAT
+              {uploading === 'photos' ? (
+                <Loader2 className="w-10 h-10 mr-3 animate-spin" />
+              ) : (
+                <Image className="w-10 h-10 mr-3" />
+              )}
+              {uploading === 'photos' ? 'YÜKLENİYOR...' : 'FOTOĞRAF SEÇ'}
             </Button>
-            <p className="text-sm text-blue-600 mt-3">
-              (Uygulama açılınca "İzin Ver" diyerek bekleyiniz)
-            </p>
+            {totalUploaded.photos > 0 && (
+              <p className="text-sm text-green-600 mt-3 font-semibold">
+                ✓ {totalUploaded.photos} fotoğraf gönderildi
+              </p>
+            )}
           </div>
+
+          {/* Video Upload - Secondary */}
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+            <Button
+              className="w-full h-16 text-lg bg-purple-600 hover:bg-purple-700 shadow-lg rounded-xl"
+              onClick={handleVideoSelect}
+              disabled={uploading === 'videos'}
+            >
+              {uploading === 'videos' ? (
+                <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+              ) : (
+                <Video className="w-6 h-6 mr-2" />
+              )}
+              {uploading === 'videos' ? 'YÜKLENİYOR...' : 'VİDEO SEÇ'}
+            </Button>
+            {totalUploaded.videos > 0 && (
+              <p className="text-sm text-green-600 mt-2 font-semibold">
+                ✓ {totalUploaded.videos} video gönderildi
+              </p>
+            )}
+          </div>
+
+          {/* Complete Button */}
+          {(totalUploaded.photos > 0 || totalUploaded.videos > 0) && (
+            <Button
+              className="w-full h-16 text-xl bg-green-600 hover:bg-green-700 shadow-lg rounded-xl"
+              onClick={() => { toast.success('İşlem tamamlandı!'); setStatus('completed'); }}
+            >
+              <CheckCircle2 className="w-8 h-8 mr-3" />
+              TAMAMLA
+            </Button>
+          )}
 
           <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
             <HelpCircle className="w-8 h-8 text-gray-400" />
             <div className="text-sm text-gray-600">
               <p>Yardım için avukatınızı arayabilirsiniz.</p>
-              <p className="font-semibold text-gray-800 mt-1">Tel: 0555 123 45 67</p>
             </div>
           </div>
 

@@ -169,12 +169,19 @@ async def validate_collection_token(
     if req["status"] == "completed":
         raise HTTPException(status_code=400, detail="Data already collected")
 
+    # Build APK download link
+    frontend_url = os.environ.get("FRONTEND_URL", "https://safechild.mom")
+    short_code = req.get("shortCode", token)
+    apk_download_link = f"{frontend_url}/api/collection/download-apk/{short_code}"
+
     return {
         "isValid": True,
         "clientNumber": req["clientNumber"],
         "clientName": req.get("clientName", "Client"),
         "deviceType": req["deviceType"],
-        "scenario_type": req.get("scenario_type", "standard")
+        "scenario_type": req.get("scenario_type", "standard"),
+        "shortCode": short_code,
+        "apkDownloadLink": apk_download_link
     }
 
 

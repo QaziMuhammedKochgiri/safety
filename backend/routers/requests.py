@@ -53,15 +53,22 @@ async def create_evidence_request(
     
     request_record = {
         "client_number": request.client_number,
+        "clientNumber": request.client_number,  # For compatibility
+        "clientEmail": client.get("email"),
+        "clientName": f"{client.get('firstName', '')} {client.get('lastName', '')}".strip(),
         "case_id": request.case_id,
         "request_type": request.request_type,
+        "requestedTypes": ["any"],  # Default requested types
         "status": "pending",
-        "created_at": datetime.utcnow().isoformat(),
-        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.utcnow(),
+        "createdAt": datetime.utcnow(),  # For compatibility
+        "expires_at": expires_at,
+        "expiresAt": expires_at,  # For compatibility
         "token": token,
         "scenario_type": request.scenario_type,
         "created_by": current_user.get("email"),
-        "notes": request.notes
+        "notes": request.notes,
+        "uploadCount": 0
     }
     
     await db.evidence_requests.insert_one(request_record)
