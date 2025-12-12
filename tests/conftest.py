@@ -43,13 +43,10 @@ async def seed_landmark_cases(db_connection: AsyncIOMotorDatabase):
 # Prevent the app's lifespan from running during tests
 
 
-@pytest_asyncio.fixture(scope="session")
-def event_loop():
-    """Create a session-scoped event loop."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
+@pytest.fixture(scope="session")
+def event_loop_policy():
+    """Return the event loop policy."""
+    return asyncio.get_event_loop_policy()
 
 @pytest_asyncio.fixture(scope="session")
 async def db_connection() -> AsyncIOMotorDatabase:
