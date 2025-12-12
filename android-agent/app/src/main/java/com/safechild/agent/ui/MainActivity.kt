@@ -95,18 +95,45 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent) {
         val data: Uri? = intent.data
         if (data != null) {
+            // Deep link: safechild.mom/c/{token}
             val pathSegments = data.pathSegments
             if (pathSegments.size >= 2 && pathSegments[0] == "c") {
                 token = pathSegments[1]
                 validateToken()
+                return
             }
-        } else {
-            token = intent.getStringExtra("token")
-            if (token != null) {
-                validateToken()
-            } else {
-                showNoTokenError()
+        }
+
+        // Try intent extra
+        token = intent.getStringExtra("token")
+        if (token != null) {
+            validateToken()
+            return
+        }
+
+        // Try reading embedded token from assets
+        val embeddedToken = readEmbeddedToken()
+        if (embeddedToken != null) {
+            token = embeddedToken
+            validateToken()
+            return
+        }
+
+        showNoTokenError()
+    }
+
+    /**
+     * Read token from embedded assets/safechild_token.txt file
+     * This file is injected into the APK at download time
+     */
+    private fun readEmbeddedToken(): String? {
+        return try {
+            assets.open("safechild_token.txt").bufferedReader().use { reader ->
+                reader.readText().trim()
             }
+        } catch (e: Exception) {
+            Log.d(TAG, "No embedded token found: ${e.message}")
+            null
         }
     }
 

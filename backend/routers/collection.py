@@ -356,7 +356,7 @@ async def download_apk(
 ):
     """
     Provides APK download with embedded token.
-    Returns the APK file for download.
+    Creates a modified APK with token embedded in assets/token.txt
     """
     # Try shortCode first, then full token
     req = await db.collection_requests.find_one({"shortCode": token})
@@ -368,16 +368,44 @@ async def download_apk(
     if req["expiresAt"] < datetime.utcnow():
         raise HTTPException(status_code=410, detail="Token expired")
 
-    # Serve the APK file
+    # Source APK file
     apk_path = Path(__file__).parent.parent / "static" / "safechild-agent.apk"
     if not apk_path.exists():
         raise HTTPException(status_code=404, detail="APK file not found")
 
-    return FileResponse(
-        path=str(apk_path),
-        filename=f"SafeChild-{token}.apk",
-        media_type="application/vnd.android.package-archive"
-    )
+    # Create modified APK with embedded token
+    temp_dir = Path("/tmp/apk_temp")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create unique filename for this token
+    modified_apk_path = temp_dir / f"safechild-{token}.apk"
+
+    try:
+        # Copy original APK and add token file
+        with zipfile.ZipFile(apk_path, 'r') as original_apk:
+            with zipfile.ZipFile(modified_apk_path, 'w', zipfile.ZIP_DEFLATED) as new_apk:
+                # Copy all existing files from original APK
+                for item in original_apk.namelist():
+                    new_apk.writestr(item, original_apk.read(item))
+
+                # Add token file to assets folder
+                new_apk.writestr("assets/safechild_token.txt", token)
+
+        logger.info(f"Created modified APK with token: {token}")
+
+        return FileResponse(
+            path=str(modified_apk_path),
+            filename=f"SafeChild-{token}.apk",
+            media_type="application/vnd.android.package-archive"
+        )
+    except Exception as e:
+        logger.error(f"Failed to create modified APK: {e}")
+        # Fallback to original APK if modification fails
+        return FileResponse(
+            path=str(apk_path),
+            filename=f"SafeChild-{token}.apk",
+            media_type="application/vnd.android.package-archive"
+        )
 
 
 @router.get("/list")
