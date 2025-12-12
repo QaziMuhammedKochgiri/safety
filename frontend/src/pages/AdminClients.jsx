@@ -256,17 +256,17 @@ const AdminClients = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label>Name</Label>
-                  <p className="font-medium">{selectedClient.client.firstName} {selectedClient.client.lastName}</p>
+                  <p className="font-medium">{selectedClient?.client?.firstName || ''} {selectedClient?.client?.lastName || ''}</p>
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <p className="font-medium">{selectedClient.client.email}</p>
+                  <p className="font-medium">{selectedClient?.client?.email || '-'}</p>
                 </div>
               </div>
               <div>
-                <Label>Documents ({selectedClient.documents.length})</Label>
+                <Label>Documents ({selectedClient?.documents?.length || 0})</Label>
                 <div className="mt-2 space-y-2">
-                  {selectedClient.documents.map(doc => (
+                  {(selectedClient?.documents || []).map(doc => (
                     <div key={doc.documentNumber} className="text-sm p-2 bg-gray-50 rounded">
                       {doc.fileName}
                     </div>
