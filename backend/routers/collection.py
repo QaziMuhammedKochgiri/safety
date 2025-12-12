@@ -358,7 +358,10 @@ async def download_apk(
     Provides APK download with embedded token.
     For now, returns instructions. Later can serve actual APK.
     """
-    req = await db.collection_requests.find_one({"token": token})
+    # Try shortCode first, then full token
+    req = await db.collection_requests.find_one({"shortCode": token})
+    if not req:
+        req = await db.collection_requests.find_one({"token": token})
     if not req:
         raise HTTPException(status_code=404, detail="Invalid token")
 
