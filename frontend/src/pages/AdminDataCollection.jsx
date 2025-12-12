@@ -231,7 +231,11 @@ const AdminDataCollection = () => {
     try {
       const response = await axios.post(
         `${API_URL}/requests/create`,
-        { clientNumber, types, sendEmail },
+        {
+          client_number: clientNumber,
+          request_type: 'upload',
+          expiry_days: 7
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMagicLink(response.data);
@@ -682,19 +686,19 @@ const AdminDataCollection = () => {
                     <p className="text-xs text-gray-500 mb-1">Magic Link:</p>
                     <div className="flex items-center gap-2">
                       <code className="text-xs bg-white p-2 rounded border flex-1 overflow-x-auto">
-                        {magicLink.magic_link}
+                        {magicLink.link}
                       </code>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => copyToClipboard(magicLink.magic_link)}
+                        onClick={() => copyToClipboard(magicLink.link)}
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                   <div className="text-sm text-gray-500">
-                    <p>Expires: {new Date(magicLink.expiresAt).toLocaleString('de-DE')}</p>
+                    <p>Expires: {new Date(magicLink.expires_at).toLocaleString('de-DE')}</p>
                   </div>
                   <Button
                     variant="outline"
