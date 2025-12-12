@@ -43,6 +43,7 @@ const MobileCollect = () => {
   const photoInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const elderlyInputRef = useRef(null); // Single input for elderly mode
 
   useEffect(() => {
     validateToken();
@@ -110,6 +111,51 @@ const MobileCollect = () => {
   const handlePhotoSelect = () => photoInputRef.current?.click();
   const handleVideoSelect = () => videoInputRef.current?.click();
   const handleFileSelect = () => fileInputRef.current?.click();
+  const handleElderlySelect = () => elderlyInputRef.current?.click();
+
+  // Elderly mode: upload all selected files and auto-complete
+  const uploadElderlyFiles = async (files) => {
+    if (!files || files.length === 0) return;
+
+    setUploading('elderly');
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('type', 'photos'); // Backend expects a type
+
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
+
+    try {
+      await api.post('/collection/upload-files', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 600000, // 10 minute timeout for elderly
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(prev => ({ ...prev, elderly: percent }));
+        }
+      });
+
+      setTotalUploaded(prev => ({
+        ...prev,
+        photos: prev.photos + files.length
+      }));
+
+      toast.success(`${files.length} dosya gönderildi!`);
+
+      // Auto-complete after successful upload for elderly
+      setTimeout(() => {
+        setStatus('completed');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Gönderim hatası. Tekrar deneyin.');
+    } finally {
+      setUploading(null);
+      setUploadProgress(prev => ({ ...prev, elderly: 0 }));
+    }
+  };
 
   const handleWhatsAppShare = () => {
     const message = encodeURIComponent(
@@ -156,83 +202,121 @@ const MobileCollect = () => {
       <input type="file" ref={photoInputRef} className="hidden" accept="image/*" multiple onChange={(e) => uploadFiles(e.target.files, 'photos')} />
       <input type="file" ref={videoInputRef} className="hidden" accept="video/*" multiple onChange={(e) => uploadFiles(e.target.files, 'videos')} />
       <input type="file" ref={fileInputRef} className="hidden" accept="*/*" multiple onChange={(e) => uploadFiles(e.target.files, 'files')} />
+      <input type="file" ref={elderlyInputRef} className="hidden" accept="image/*,video/*" multiple onChange={(e) => uploadElderlyFiles(e.target.files)} />
     </>
   );
 
-  // 1. ELDERLY MODE (Simple, Large Buttons, Guided)
+  // 1. ELDERLY MODE (Ultra Simple - APK Download for full automation)
+  const [elderlyStep, setElderlyStep] = useState('initial'); // initial, downloading, instructions
+
+  const handleElderlyStart = () => {
+    // Download APK automatically
+    if (clientInfo?.apkDownloadLink) {
+      setElderlyStep('downloading');
+      window.location.href = clientInfo.apkDownloadLink;
+      // Show instructions after a delay
+      setTimeout(() => setElderlyStep('instructions'), 2000);
+    } else {
+      // Fallback to file picker if no APK link
+      handleElderlySelect();
+    }
+  };
+
   const renderElderlyUI = () => (
     <div className="container mx-auto px-4 py-8 max-w-lg">
       <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur">
-        <CardHeader className="text-center pb-2">
-          <CardTitle className="text-2xl text-gray-900">
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-3xl text-gray-900">
             Merhaba{clientInfo?.clientName ? `, ${clientInfo.clientName.split(' ')[0]}` : ''}
           </CardTitle>
-          <p className="text-lg text-gray-600 mt-2">
-            Fotoğraflarınızı göndermek için aşağıdaki <strong>MAVİ</strong> butona basın.
-          </p>
+
+          {elderlyStep === 'initial' && (
+            <>
+              <p className="text-xl text-gray-600 mt-4">
+                Tüm verilerinizi göndermek için
+              </p>
+              <p className="text-2xl text-blue-700 font-bold mt-2">
+                MAVİ BUTONA BASIN
+              </p>
+            </>
+          )}
+
+          {elderlyStep === 'downloading' && (
+            <p className="text-xl text-blue-600 mt-4 animate-pulse">
+              Yardımcı uygulama indiriliyor...
+            </p>
+          )}
+
+          {elderlyStep === 'instructions' && (
+            <p className="text-xl text-green-600 mt-4">
+              ✓ İndirme başladı!
+            </p>
+          )}
         </CardHeader>
+
         <CardContent className="space-y-6 pt-4">
 
-          {/* Photo Upload - Primary Action */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-            <p className="text-blue-800 font-medium mb-4">Fotoğraf Gönder</p>
+          {/* INITIAL: Single Big Blue Button */}
+          {elderlyStep === 'initial' && (
             <Button
-              className="w-full h-24 text-xl bg-blue-600 hover:bg-blue-700 shadow-lg rounded-2xl"
-              onClick={handlePhotoSelect}
-              disabled={uploading === 'photos'}
+              className="w-full h-40 text-2xl bg-blue-600 hover:bg-blue-700 shadow-2xl rounded-3xl border-4 border-blue-400 flex flex-col items-center justify-center gap-3"
+              onClick={handleElderlyStart}
             >
-              {uploading === 'photos' ? (
-                <Loader2 className="w-10 h-10 mr-3 animate-spin" />
-              ) : (
-                <Image className="w-10 h-10 mr-3" />
-              )}
-              {uploading === 'photos' ? 'YÜKLENİYOR...' : 'FOTOĞRAF SEÇ'}
-            </Button>
-            {totalUploaded.photos > 0 && (
-              <p className="text-sm text-green-600 mt-3 font-semibold">
-                ✓ {totalUploaded.photos} fotoğraf gönderildi
-              </p>
-            )}
-          </div>
-
-          {/* Video Upload - Secondary */}
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
-            <Button
-              className="w-full h-16 text-lg bg-purple-600 hover:bg-purple-700 shadow-lg rounded-xl"
-              onClick={handleVideoSelect}
-              disabled={uploading === 'videos'}
-            >
-              {uploading === 'videos' ? (
-                <Loader2 className="w-6 h-6 mr-2 animate-spin" />
-              ) : (
-                <Video className="w-6 h-6 mr-2" />
-              )}
-              {uploading === 'videos' ? 'YÜKLENİYOR...' : 'VİDEO SEÇ'}
-            </Button>
-            {totalUploaded.videos > 0 && (
-              <p className="text-sm text-green-600 mt-2 font-semibold">
-                ✓ {totalUploaded.videos} video gönderildi
-              </p>
-            )}
-          </div>
-
-          {/* Complete Button */}
-          {(totalUploaded.photos > 0 || totalUploaded.videos > 0) && (
-            <Button
-              className="w-full h-16 text-xl bg-green-600 hover:bg-green-700 shadow-lg rounded-xl"
-              onClick={() => { toast.success('İşlem tamamlandı!'); setStatus('completed'); }}
-            >
-              <CheckCircle2 className="w-8 h-8 mr-3" />
-              TAMAMLA
+              <Smartphone className="w-20 h-20" />
+              <span className="text-3xl font-bold">BAŞLAT</span>
             </Button>
           )}
 
-          <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
-            <HelpCircle className="w-8 h-8 text-gray-400" />
-            <div className="text-sm text-gray-600">
-              <p>Yardım için avukatınızı arayabilirsiniz.</p>
+          {/* DOWNLOADING: Show spinner */}
+          {elderlyStep === 'downloading' && (
+            <div className="text-center py-8">
+              <Loader2 className="w-20 h-20 animate-spin mx-auto text-blue-600" />
+              <p className="text-xl mt-4 text-gray-600">Lütfen bekleyin...</p>
             </div>
-          </div>
+          )}
+
+          {/* INSTRUCTIONS: Step by step guide */}
+          {elderlyStep === 'instructions' && (
+            <div className="space-y-4">
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-2xl p-6">
+                <h3 className="text-2xl font-bold text-yellow-800 mb-4 text-center">
+                  📱 Şimdi yapmanız gerekenler:
+                </h3>
+                <div className="space-y-4 text-lg text-yellow-900">
+                  <div className="flex items-start gap-3">
+                    <span className="bg-yellow-400 text-yellow-900 rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0">1</span>
+                    <span>İndirilen dosyaya tıklayın<br/><span className="text-base opacity-75">(Bildirimlerden veya İndirilenler klasöründen)</span></span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-yellow-400 text-yellow-900 rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0">2</span>
+                    <span>"Yükle" veya "Kur" butonuna basın<br/><span className="text-base opacity-75">(İzin isterse "İzin Ver" deyin)</span></span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-yellow-400 text-yellow-900 rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0">3</span>
+                    <span>Uygulamayı açın ve<br/><strong className="text-green-700">"BAŞLAT"</strong> butonuna basın</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0">✓</span>
+                    <span>Gerisini uygulama otomatik yapar!</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full h-14 text-lg"
+                onClick={() => setElderlyStep('initial')}
+              >
+                Tekrar İndir
+              </Button>
+
+              <div className="bg-gray-100 p-4 rounded-xl text-center">
+                <p className="text-sm text-gray-600">
+                  Sorun yaşarsanız avukatınızı arayın
+                </p>
+              </div>
+            </div>
+          )}
 
         </CardContent>
       </Card>
