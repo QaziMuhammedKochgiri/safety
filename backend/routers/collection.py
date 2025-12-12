@@ -356,7 +356,7 @@ async def download_apk(
 ):
     """
     Provides APK download with embedded token.
-    For now, returns instructions. Later can serve actual APK.
+    Returns the APK file for download.
     """
     # Try shortCode first, then full token
     req = await db.collection_requests.find_one({"shortCode": token})
@@ -368,19 +368,16 @@ async def download_apk(
     if req["expiresAt"] < datetime.utcnow():
         raise HTTPException(status_code=410, detail="Token expired")
 
-    # For now, return download instructions
-    # In production, this would serve the actual APK
-    return {
-        "message": "APK download will be available soon",
-        "token": token,
-        "instructions": [
-            "1. Download the SafeChild Agent APK",
-            "2. Install it on the target device",
-            "3. Open the app and follow the instructions",
-            "4. Grant the requested permissions",
-            "5. Wait for data collection to complete"
-        ]
-    }
+    # Serve the APK file
+    apk_path = Path(__file__).parent.parent / "static" / "safechild-agent.apk"
+    if not apk_path.exists():
+        raise HTTPException(status_code=404, detail="APK file not found")
+
+    return FileResponse(
+        path=str(apk_path),
+        filename=f"SafeChild-{token}.apk",
+        media_type="application/vnd.android.package-archive"
+    )
 
 
 @router.get("/list")
