@@ -46,11 +46,11 @@ const AdminClients = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = clients.filter(c => 
-        c.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.clientNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = clients.filter(c =>
+        c.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.clientNumber?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredClients(filtered);
     } else {
