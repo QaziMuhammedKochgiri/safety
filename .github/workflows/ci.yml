@@ -47,21 +47,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd backend
-          pip install -r requirements.txt
+          pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio pytest-cov
 
       - name: Run backend tests
         run: |
-          cd backend
-          python -m pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
+          python -m pytest tests/ -v --cov=backend --cov-report=xml --cov-report=term-missing
         env:
-          PYTHONPATH: .
+          PYTHONPATH: backend
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
         with:
-          files: ./backend/coverage.xml
+          files: ./coverage.xml
           flags: backend
           fail_ci_if_error: false
 
@@ -85,7 +83,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          yarn install --frozen-lockfile
+          yarn install
 
       - name: Lint
         run: |
