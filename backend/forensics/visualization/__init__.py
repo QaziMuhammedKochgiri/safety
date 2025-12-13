@@ -16,12 +16,27 @@ from .contact_network import (
     detect_clusters
 )
 
+from .location_mapping import (
+    LocationMapper,
+    GeoLocation,
+    LocationCluster,
+    LocationSource,
+    extract_gps_from_images
+)
+
 __all__ = [
+    # Contact Network
     'ContactNetworkGraph',
     'NetworkNode',
     'NetworkEdge',
     'ClusterResult',
     'build_contact_network',
     'calculate_centrality',
-    'detect_clusters'
+    'detect_clusters',
+    # Location Mapping
+    'LocationMapper',
+    'GeoLocation',
+    'LocationCluster',
+    'LocationSource',
+    'extract_gps_from_images'
 ]

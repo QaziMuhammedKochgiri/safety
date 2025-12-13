@@ -182,21 +182,21 @@
 ### Sprint 11-12: GPS & Location Mapping (Hafta 21-24)
 
 #### Data Extraction
-- [ ] EXIF GPS from all photos
-- [ ] Google Location History
-- [ ] iOS Significant Locations
+- [x] EXIF GPS from all photos ✅ 2025-12-13 (location_mapping.py)
+- [x] Google Location History ✅ 2025-12-13
+- [x] iOS Significant Locations ✅ 2025-12-13
 - [ ] Check-in data (social media)
 
 #### Map Visualization
-- [ ] Leaflet.js integration (BSD License)
-- [ ] OpenStreetMap tiles (ücretsiz)
-- [ ] Heatmap layer
-- [ ] Timeline slider (animate movement)
-- [ ] Cluster markers
+- [x] Leaflet.js integration (BSD License) ✅ 2025-12-13 (LocationMap.jsx)
+- [x] OpenStreetMap tiles (ücretsiz) ✅ 2025-12-13
+- [x] Heatmap layer ✅ 2025-12-13 (leaflet.heat)
+- [x] Timeline slider (animate movement) ✅ 2025-12-13
+- [x] Cluster markers ✅ 2025-12-13
 - [ ] Geofence alerts
 
 #### Analysis
-- [ ] Frequent locations
+- [x] Frequent locations ✅ 2025-12-13 (detect_clusters)
 - [ ] Travel patterns
 - [ ] Location anomalies
 - [ ] Address reverse geocoding (Nominatim - ücretsiz)
