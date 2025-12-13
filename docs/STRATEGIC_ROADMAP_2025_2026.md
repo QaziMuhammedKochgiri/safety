@@ -153,23 +153,23 @@
 ### Sprint 9-10: Contact Network Graph (Hafta 17-20)
 
 #### Graph Engine
-- [ ] Node extraction (all contacts)
-- [ ] Edge calculation (message count)
-- [ ] Cluster detection (K-means)
-- [ ] Centrality analysis
+- [x] Node extraction (all contacts) ✅ 2025-12-13 (contact_network.py)
+- [x] Edge calculation (message count) ✅ 2025-12-13
+- [x] Cluster detection (K-means) ✅ 2025-12-13
+- [x] Centrality analysis ✅ 2025-12-13
 
 #### UI Components
-- [ ] Cytoscape.js integration (MIT License)
-- [ ] Force-directed layout
-- [ ] Node sizing (by frequency)
-- [ ] Edge coloring (by platform)
-- [ ] Zoom/pan controls
-- [ ] Node selection + details
+- [x] Cytoscape.js integration (MIT License) ✅ 2025-12-13 (ContactNetworkGraph.jsx)
+- [x] Force-directed layout ✅ 2025-12-13 (COSE layout)
+- [x] Node sizing (by frequency) ✅ 2025-12-13
+- [x] Edge coloring (by platform) ✅ 2025-12-13
+- [x] Zoom/pan controls ✅ 2025-12-13
+- [x] Node selection + details ✅ 2025-12-13
 
 #### Analytics
 - [ ] Communication frequency heatmap
-- [ ] Relationship strength scoring
-- [ ] Suspicious pattern detection
+- [x] Relationship strength scoring ✅ 2025-12-13 (centrality)
+- [x] Suspicious pattern detection ✅ 2025-12-13 (one-way comm, high freq)
 
 **Kullanılan Araçlar:**
 | Araç | Maliyet | Not |

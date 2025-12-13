@@ -38,7 +38,8 @@ from .routers import (
     case_timeline,
     analytics,
     templates,
-    calendar
+    calendar,
+    network_graph
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -257,6 +258,7 @@ api_router.include_router(case_timeline.router)
 api_router.include_router(analytics.router)
 api_router.include_router(templates.router)
 api_router.include_router(calendar.router)
+api_router.include_router(network_graph.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)
