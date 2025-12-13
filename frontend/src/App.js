@@ -48,6 +48,13 @@ import MobileCollect from "./pages/MobileCollect";
 import MockCheckoutSuccess from "./pages/MockCheckoutSuccess";
 import IOSAgent from "./pages/IOSAgent";
 
+// Phase 2 (2026) AI Module Pages
+import AdminAlienationAnalysis from "./pages/AdminAlienationAnalysis";
+import AdminRiskPredictor from "./pages/AdminRiskPredictor";
+import AdminCourtPackage from "./pages/AdminCourtPackage";
+import AdminVoiceBiometrics from "./pages/AdminVoiceBiometrics";
+import AdminExpertNetwork from "./pages/AdminExpertNetwork";
+
 function App() {
   return (
     <LanguageProvider>
@@ -142,6 +149,13 @@ function App() {
               <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
               <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
               <Route path="/admin/calendar" element={<AdminRoute><AdminCalendar /></AdminRoute>} />
+
+              {/* Phase 2 (2026) AI Module Routes */}
+              <Route path="/admin/alienation" element={<AdminRoute><AdminAlienationAnalysis /></AdminRoute>} />
+              <Route path="/admin/risk-predictor" element={<AdminRoute><AdminRiskPredictor /></AdminRoute>} />
+              <Route path="/admin/court-package" element={<AdminRoute><AdminCourtPackage /></AdminRoute>} />
+              <Route path="/admin/voice-biometrics" element={<AdminRoute><AdminVoiceBiometrics /></AdminRoute>} />
+              <Route path="/admin/expert-network" element={<AdminRoute><AdminExpertNetwork /></AdminRoute>} />
 
               {/* Magic Link Upload (Public - Token Based) */}
               <Route path="/upload-evidence/:token" element={<MagicUpload />} />
