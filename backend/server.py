@@ -44,7 +44,8 @@ from .routers import (
     transcription,
     image_analysis,
     reports,
-    device_comparison
+    device_comparison,
+    dashboard
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -269,6 +270,7 @@ api_router.include_router(transcription.router)
 api_router.include_router(image_analysis.router)
 api_router.include_router(reports.router)
 api_router.include_router(device_comparison.router)
+api_router.include_router(dashboard.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)
