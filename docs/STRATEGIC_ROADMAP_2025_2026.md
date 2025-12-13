@@ -78,9 +78,9 @@
 - [ ] Selective download
 
 #### Frontend
-- [ ] Cloud connection wizard
-- [ ] Backup selection UI
-- [ ] Download progress
+- [x] Cloud connection wizard ✅ 2025-12-13 (CloudConnectionWizard.jsx)
+- [x] Backup selection UI ✅ 2025-12-13
+- [x] Download progress ✅ 2025-12-13
 
 **Kullanılan Araçlar:**
 | Araç | Maliyet | Not |
@@ -94,10 +94,10 @@
 ### Sprint 5-6: Advanced Data Recovery (Hafta 9-12)
 
 #### SQLite WAL Analysis
-- [ ] Write-Ahead Log parsing
-- [ ] Deleted row recovery
-- [ ] Timestamp reconstruction
-- [ ] Confidence scoring
+- [x] Write-Ahead Log parsing ✅ 2025-12-13 (sqlite_wal.py)
+- [x] Deleted row recovery ✅ 2025-12-13
+- [x] Timestamp reconstruction ✅ 2025-12-13
+- [x] Confidence scoring ✅ 2025-12-13
 
 #### File Carving
 - [ ] JPEG/PNG header scanning
@@ -130,12 +130,12 @@
 - [ ] Anomaly highlighting
 
 #### UI Components (React)
-- [ ] vis-timeline.js integration (MIT License)
-- [ ] Zoom levels (year/month/day/hour)
-- [ ] Event clustering
-- [ ] Color coding by source
-- [ ] Click-to-detail
-- [ ] Filter panel
+- [x] vis-timeline.js integration (MIT License) ✅ 2025-12-13 (CaseTimeline.jsx, ForensicTimeline.jsx)
+- [x] Zoom levels (year/month/day/hour) ✅ 2025-12-13
+- [x] Event clustering ✅ 2025-12-13
+- [x] Color coding by source ✅ 2025-12-13
+- [x] Click-to-detail ✅ 2025-12-13
+- [x] Filter panel ✅ 2025-12-13
 
 #### Export
 - [ ] Timeline as image (PNG/SVG)
