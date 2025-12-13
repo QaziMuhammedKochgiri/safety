@@ -50,7 +50,7 @@
 - [ ] Screen recording guidance
 
 #### Backend Integration
-- [ ] /api/forensics/analyze-ios endpoint
+- [x] /api/forensics/analyze-ios endpoint ✅ 2025-12-13 (ios_forensics.py)
 - [x] iOS-specific parsers ✅ 2025-12-13 (ios_backup.py oluşturuldu)
 - [ ] Unified report format
 
@@ -571,7 +571,7 @@
 
 | Çeyrek | Hedef | Durum |
 |--------|-------|-------|
-| Q1 | iOS + Cloud + Recovery | 🟨 35% (iOS parser + GDrive tamamlandı) |
+| Q1 | iOS + Cloud + Recovery | 🟨 45% (iOS parser + endpoint + GDrive) |
 | Q2 | Timeline + Graph + Maps | ⬜ 0% |
 | Q3 | Speech + Image + AI | ⬜ 0% |
 | Q4 | Reports + Multi-device | ⬜ 0% |
