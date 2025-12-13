@@ -1,0 +1,64 @@
+{
+  "short_name": "SafeChild",
+  "name": "SafeChild - iOS Evidence Collection",
+  "description": "Secure evidence collection tool for child custody cases",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/ios-agent",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#1e3a8a",
+  "background_color": "#f0f9ff",
+  "orientation": "portrait",
+  "categories": ["utilities", "productivity"],
+  "lang": "tr",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "screenshot-ios.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "iOS Evidence Collection"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Collect Photos",
+      "short_name": "Photos",
+      "description": "Export photos from your device",
+      "url": "/ios-agent?action=photos",
+      "icons": [{ "src": "icon-photos.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Export Contacts",
+      "short_name": "Contacts",
+      "description": "Export your contacts",
+      "url": "/ios-agent?action=contacts",
+      "icons": [{ "src": "icon-contacts.png", "sizes": "96x96" }]
+    }
+  ]
+}

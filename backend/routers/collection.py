@@ -824,3 +824,207 @@ async def complete_chunked_upload(
         # Cleanup on error
         shutil.rmtree(upload_chunk_dir, ignore_errors=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# iOS Agent PWA Upload Endpoint
+# =============================================================================
+
+from pydantic import BaseModel
+from typing import Optional
+import base64
+
+
+class IOSUploadPhoto(BaseModel):
+    name: str
+    size: int
+    type: str
+    lastModified: int
+    base64: str
+    exif: Optional[dict] = None
+
+
+class IOSUploadContact(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class IOSDeviceInfo(BaseModel):
+    platform: Optional[str] = None
+    userAgent: Optional[str] = None
+    language: Optional[str] = None
+    isIOS: Optional[bool] = None
+    isPWA: Optional[bool] = None
+    screenWidth: Optional[int] = None
+    screenHeight: Optional[int] = None
+    devicePixelRatio: Optional[float] = None
+
+
+class IOSUploadPayload(BaseModel):
+    token: str
+    deviceInfo: Optional[IOSDeviceInfo] = None
+    photos: List[IOSUploadPhoto] = []
+    contacts: List[IOSUploadContact] = []
+    notes: Optional[str] = None
+    timestamp: Optional[str] = None
+
+
+@router.post("/ios-upload")
+async def ios_agent_upload(
+    payload: IOSUploadPayload,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    iOS Agent PWA upload endpoint.
+    Receives photos, contacts, and notes from iOS Safari Web App.
+    """
+    # Validate token - try shortCode first, then full token
+    req = await db.collection_requests.find_one({"shortCode": payload.token})
+    if not req:
+        req = await db.collection_requests.find_one({"token": payload.token})
+    if not req:
+        raise HTTPException(status_code=404, detail="Invalid token")
+
+    if req["expiresAt"] < datetime.utcnow():
+        raise HTTPException(status_code=410, detail="Token expired")
+
+    client_number = req["clientNumber"]
+
+    try:
+        # Create directory structure
+        base_dir = UPLOAD_DIR / client_number / "ios_agent"
+        photos_dir = base_dir / "photos"
+        photos_dir.mkdir(parents=True, exist_ok=True)
+
+        saved_photos = []
+        total_size = 0
+
+        # Process and save photos
+        for photo in payload.photos:
+            try:
+                # Decode base64 image
+                # Remove data URL prefix if present
+                base64_data = photo.base64
+                if ',' in base64_data:
+                    base64_data = base64_data.split(',')[1]
+
+                image_data = base64.b64decode(base64_data)
+                total_size += len(image_data)
+
+                # Generate unique filename
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                unique_id = uuid.uuid4().hex[:8]
+                ext = Path(photo.name).suffix if photo.name else '.jpg'
+                safe_filename = f"{timestamp}_{unique_id}{ext}"
+
+                # Save image
+                file_path = photos_dir / safe_filename
+                with open(file_path, "wb") as f:
+                    f.write(image_data)
+
+                saved_photos.append({
+                    "original_name": photo.name,
+                    "saved_name": safe_filename,
+                    "size": len(image_data),
+                    "type": photo.type,
+                    "lastModified": photo.lastModified,
+                    "exif": photo.exif,
+                    "uploaded_at": datetime.utcnow().isoformat()
+                })
+            except Exception as e:
+                logger.warning(f"Failed to save photo {photo.name}: {e}")
+                continue
+
+        # Generate case ID
+        case_id = f"IOS_{client_number}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        reference = f"ios_{uuid.uuid4().hex[:8]}"
+
+        # Create or update forensic record
+        existing_record = await db.forensic_analyses.find_one({
+            "client_number": client_number,
+            "source": "ios_agent"
+        })
+
+        analysis_data = {
+            "case_id": case_id,
+            "client_number": client_number,
+            "source": "ios_agent",
+            "status": "collected",
+            "collection_token": payload.token,
+            "reference": reference,
+            "upload_dir": str(base_dir),
+            "device_info": payload.deviceInfo.dict() if payload.deviceInfo else None,
+            "collected_photos": saved_photos,
+            "collected_contacts": [c.dict() for c in payload.contacts],
+            "notes": payload.notes,
+            "statistics": {
+                "photos": len(saved_photos),
+                "contacts": len(payload.contacts),
+                "total_size": total_size,
+                "has_notes": bool(payload.notes)
+            },
+            "chain_of_custody": [{
+                "id": str(uuid.uuid4()),
+                "timestamp": datetime.utcnow(),
+                "actor": "iOS Agent PWA",
+                "action": "DATA_COLLECTED",
+                "details": f"Collected {len(saved_photos)} photos, {len(payload.contacts)} contacts via iOS Safari"
+            }],
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+
+        if existing_record:
+            # Update existing record
+            await db.forensic_analyses.update_one(
+                {"_id": existing_record["_id"]},
+                {
+                    "$push": {
+                        "collected_photos": {"$each": saved_photos},
+                        "collected_contacts": {"$each": [c.dict() for c in payload.contacts]},
+                        "chain_of_custody": {
+                            "id": str(uuid.uuid4()),
+                            "timestamp": datetime.utcnow(),
+                            "actor": "iOS Agent PWA",
+                            "action": "DATA_UPDATED",
+                            "details": f"Added {len(saved_photos)} photos, {len(payload.contacts)} contacts"
+                        }
+                    },
+                    "$set": {
+                        "updated_at": datetime.utcnow(),
+                        "notes": payload.notes or existing_record.get("notes")
+                    },
+                    "$inc": {
+                        "statistics.photos": len(saved_photos),
+                        "statistics.contacts": len(payload.contacts),
+                        "statistics.total_size": total_size
+                    }
+                }
+            )
+        else:
+            await db.forensic_analyses.insert_one(analysis_data)
+
+        logger.info(f"iOS Agent upload completed", extra={"extra_fields": {
+            "case_id": case_id,
+            "client_number": client_number,
+            "photos": len(saved_photos),
+            "contacts": len(payload.contacts),
+            "total_size": total_size
+        }})
+
+        return {
+            "success": True,
+            "reference": reference,
+            "caseId": case_id,
+            "statistics": {
+                "photos": len(saved_photos),
+                "contacts": len(payload.contacts),
+                "totalSize": total_size
+            },
+            "message": "Veriler basariyla yuklendi"
+        }
+
+    except Exception as e:
+        logger.error(f"iOS Agent upload failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

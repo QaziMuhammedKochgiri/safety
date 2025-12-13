@@ -46,6 +46,7 @@ import SocialConnect from "./pages/SocialConnect";
 import ClientSocialConnect from "./pages/ClientSocialConnect";
 import MobileCollect from "./pages/MobileCollect";
 import MockCheckoutSuccess from "./pages/MockCheckoutSuccess";
+import IOSAgent from "./pages/IOSAgent";
 
 function App() {
   return (
@@ -118,6 +119,9 @@ function App() {
 
               {/* Short URL for Mobile Collection - safechild.mom/c/abc12345 */}
               <Route path="/c/:token" element={<MobileCollect />} />
+
+              {/* iOS Agent PWA - Safari Web App for iOS devices */}
+              <Route path="/ios-agent" element={<IOSAgent />} />
 
               {/* Admin routes - protected, admin only */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

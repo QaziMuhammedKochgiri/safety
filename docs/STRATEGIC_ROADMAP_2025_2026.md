@@ -44,9 +44,9 @@
 - [x] Call history (CallHistory.storedata) ✅ 2025-12-13
 
 #### iOS Agent (PWA - Ücretsiz)
-- [ ] Safari Web App manifest
-- [ ] Photo library access (consent-based)
-- [ ] Contact export
+- [x] Safari Web App manifest ✅ 2025-12-13 (manifest.json + IOSAgent.jsx)
+- [x] Photo library access (consent-based) ✅ 2025-12-13
+- [x] Contact export ✅ 2025-12-13
 - [ ] Screen recording guidance
 
 #### Backend Integration
@@ -69,7 +69,7 @@
 - [x] OAuth2 flow (consent-based) ✅ 2025-12-13 (google_drive.py)
 - [x] WhatsApp backup discovery ✅ 2025-12-13
 - [x] Backup download & decrypt ✅ 2025-12-13
-- [ ] crypt14/crypt15 key extraction
+- [x] crypt14/crypt15 key extraction ✅ 2025-12-13 (whatsapp_decrypt.py)
 
 #### iCloud Integration (Gelecek - Opsiyonel)
 - [ ] pyicloud authentication
@@ -100,7 +100,7 @@
 - [x] Confidence scoring ✅ 2025-12-13
 
 #### File Carving
-- [ ] JPEG/PNG header scanning
+- [x] JPEG/PNG header scanning ✅ 2025-12-13 (file_carving.py)
 - [ ] Video fragment recovery
 - [ ] Audio message recovery
 - [ ] Thumbnail extraction
