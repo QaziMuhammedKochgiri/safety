@@ -41,7 +41,8 @@ from .routers import (
     calendar,
     network_graph,
     location_map,
-    transcription
+    transcription,
+    image_analysis
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -263,6 +264,7 @@ api_router.include_router(calendar.router)
 api_router.include_router(network_graph.router)
 api_router.include_router(location_map.router)
 api_router.include_router(transcription.router)
+api_router.include_router(image_analysis.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)

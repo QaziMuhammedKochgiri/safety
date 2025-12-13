@@ -19,6 +19,19 @@ from .speech_to_text import (
     extract_whatsapp_voice_notes
 )
 
+from .image_analysis import (
+    ImageAnalysisEngine,
+    FaceDetector,
+    ImageCategorizer,
+    OCRExtractor,
+    SafetyChecker,
+    ImageAnalysisResult,
+    DetectedFace,
+    FaceLocation,
+    ImageCategory,
+    SafetyLevel
+)
+
 __all__ = [
     # Speech-to-Text
     'SpeechToTextEngine',
@@ -29,5 +42,16 @@ __all__ = [
     'TranscriptSegment',
     'AudioFormat',
     'TranscriptionSource',
-    'extract_whatsapp_voice_notes'
+    'extract_whatsapp_voice_notes',
+    # Image Analysis
+    'ImageAnalysisEngine',
+    'FaceDetector',
+    'ImageCategorizer',
+    'OCRExtractor',
+    'SafetyChecker',
+    'ImageAnalysisResult',
+    'DetectedFace',
+    'FaceLocation',
+    'ImageCategory',
+    'SafetyLevel'
 ]

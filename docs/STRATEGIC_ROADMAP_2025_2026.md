@@ -244,22 +244,22 @@
 ### Sprint 15-16: Image Analysis (Hafta 29-32)
 
 #### Face Detection
-- [ ] face_recognition library (dlib tabanlı, ücretsiz)
-- [ ] Face extraction & grouping
-- [ ] Age estimation (local model)
-- [ ] Same-person matching
+- [x] face_recognition library (dlib tabanlı, ücretsiz) ✅ 2025-12-13 (FaceDetector)
+- [x] Face extraction & grouping ✅ 2025-12-13 (cluster_faces)
+- [x] Age estimation (local model) ✅ 2025-12-13 (heuristic-based)
+- [x] Same-person matching ✅ 2025-12-13 (match_faces)
 
 #### Image Categorization
-- [ ] Scene classification (local CLIP model)
-- [ ] Object detection (YOLO - ücretsiz)
-- [ ] Text extraction (Tesseract OCR - ücretsiz)
-- [ ] Duplicate finder (perceptual hash)
+- [x] Scene classification (local CLIP model) ✅ 2025-12-13 (ImageCategorizer)
+- [x] Object detection (YOLO - ücretsiz) ✅ 2025-12-13 (optional yolov8)
+- [x] Text extraction (Tesseract OCR - ücretsiz) ✅ 2025-12-13 (OCRExtractor)
+- [x] Duplicate finder (perceptual hash) ✅ 2025-12-13 (imagehash)
 
 #### Safety Features
-- [ ] PhotoDNA-benzeri hash matching (open source impl)
+- [x] PhotoDNA-benzeri hash matching (open source impl) ✅ 2025-12-13 (SafetyChecker)
 - [ ] Explicit content detection (local NSFW model)
 - [ ] Auto-blur sensitive content
-- [ ] Alert workflow
+- [x] Alert workflow ✅ 2025-12-13 (SafetyLevel enum)
 
 **Kullanılan Araçlar:**
 | Araç | Maliyet | Not |
