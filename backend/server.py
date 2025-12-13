@@ -23,6 +23,7 @@ from .routers import (
     payment,
     forensics,
     ios_forensics,
+    cloud_forensics,
     meetings,
     admin,
     emails,
@@ -241,6 +242,7 @@ api_router.include_router(cases.router)
 api_router.include_router(payment.router)
 api_router.include_router(forensics.router)
 api_router.include_router(ios_forensics.router)
+api_router.include_router(cloud_forensics.router)
 api_router.include_router(meetings.router)
 api_router.include_router(admin.router)
 api_router.include_router(emails.router)
