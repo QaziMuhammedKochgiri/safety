@@ -571,7 +571,7 @@
 
 | Çeyrek | Hedef | Durum |
 |--------|-------|-------|
-| Q1 | iOS + Cloud + Recovery | 🟨 45% (iOS parser + endpoint + GDrive) |
+| Q1 | iOS + Cloud + Recovery | 🟨 55% (iOS + GDrive + WAL Recovery) |
 | Q2 | Timeline + Graph + Maps | ⬜ 0% |
 | Q3 | Speech + Image + AI | ⬜ 0% |
 | Q4 | Reports + Multi-device | ⬜ 0% |

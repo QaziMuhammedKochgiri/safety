@@ -69,7 +69,7 @@ urllib3==2.5.0
 uvicorn==0.25.0
 watchfiles==1.1.1
 # emergentintegrations==0.1.0
-pytsk3==20250801
+# pytsk3==20250801  # Data recovery - install manually if needed
 
 reportlab==4.4.4
 resend==2.19.0
@@ -102,7 +102,7 @@ imagehash>=4.3.0
 # pytesseract>=0.3.10  # Uncomment when needed
 
 # Phase 1 Q4: Reports
-# PDF generation
-WeasyPrint>=60.0
+# PDF generation (requires system deps: pango, cairo)
+# WeasyPrint>=60.0  # Install manually with system deps
 # DOCX export
 python-docx>=1.0.0
