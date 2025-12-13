@@ -45,7 +45,15 @@ from .routers import (
     image_analysis,
     reports,
     device_comparison,
-    dashboard
+    dashboard,
+    # Phase 2 (2026) AI Module Routers
+    alienation,
+    risk_predictor,
+    court_package,
+    voice_biometrics,
+    expert_network,
+    evidence_agent,
+    multilingual
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -271,6 +279,15 @@ api_router.include_router(image_analysis.router)
 api_router.include_router(reports.router)
 api_router.include_router(device_comparison.router)
 api_router.include_router(dashboard.router)
+
+# Phase 2 (2026) AI Module Routers
+api_router.include_router(alienation.router)
+api_router.include_router(risk_predictor.router)
+api_router.include_router(court_package.router)
+api_router.include_router(voice_biometrics.router)
+api_router.include_router(expert_network.router)
+api_router.include_router(evidence_agent.router)
+api_router.include_router(multilingual.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)
