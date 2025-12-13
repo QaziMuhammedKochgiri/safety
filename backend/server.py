@@ -40,7 +40,8 @@ from .routers import (
     templates,
     calendar,
     network_graph,
-    location_map
+    location_map,
+    transcription
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -261,6 +262,7 @@ api_router.include_router(templates.router)
 api_router.include_router(calendar.router)
 api_router.include_router(network_graph.router)
 api_router.include_router(location_map.router)
+api_router.include_router(transcription.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)

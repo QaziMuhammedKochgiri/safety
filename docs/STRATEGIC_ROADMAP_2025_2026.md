@@ -215,22 +215,22 @@
 ### Sprint 13-14: Speech-to-Text (Hafta 25-28)
 
 #### Audio Processing
-- [ ] WhatsApp voice note extraction (.opus)
-- [ ] Telegram voice extraction
-- [ ] Video audio track extraction
-- [ ] Format conversion (ffmpeg - ücretsiz)
+- [x] WhatsApp voice note extraction (.opus) ✅ 2025-12-13 (speech_to_text.py)
+- [x] Telegram voice extraction ✅ 2025-12-13
+- [x] Video audio track extraction ✅ 2025-12-13 (ffmpeg)
+- [x] Format conversion (ffmpeg - ücretsiz) ✅ 2025-12-13
 
 #### Transcription Engine
-- [ ] OpenAI Whisper LOCAL (ücretsiz, self-hosted)
-- [ ] Language detection (auto)
-- [ ] Timestamp alignment
+- [x] OpenAI Whisper LOCAL (ücretsiz, self-hosted) ✅ 2025-12-13 (WhisperTranscriber)
+- [x] Language detection (auto) ✅ 2025-12-13
+- [x] Timestamp alignment ✅ 2025-12-13 (TranscriptSegment)
 - [ ] Speaker diarization (optional)
 
 #### Search & Analysis
-- [ ] Full-text search on transcripts
-- [ ] Keyword highlighting
-- [ ] Sentiment analysis (local model)
-- [ ] AI risk assessment on audio
+- [x] Full-text search on transcripts ✅ 2025-12-13 (transcription.py router)
+- [x] Keyword highlighting ✅ 2025-12-13 (TranscriptionViewer.jsx)
+- [x] Sentiment analysis (local model) ✅ 2025-12-13 (TranscriptAnalyzer)
+- [x] AI risk assessment on audio ✅ 2025-12-13 (RISK_KEYWORDS)
 
 **Kullanılan Araçlar:**
 | Araç | Maliyet | Not |
