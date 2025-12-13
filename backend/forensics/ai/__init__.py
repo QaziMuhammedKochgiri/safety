@@ -32,6 +32,21 @@ from .image_analysis import (
     SafetyLevel
 )
 
+from .advanced_ai import (
+    AdvancedAIEngine,
+    LLMRouter,
+    OllamaClient,
+    ClaudeClient,
+    RiskDetector,
+    CourtReportGenerator,
+    RiskAssessment,
+    RiskIndicator,
+    AlienationEvidence,
+    RiskCategory,
+    AlienationTactic,
+    analyze_for_risks
+)
+
 __all__ = [
     # Speech-to-Text
     'SpeechToTextEngine',

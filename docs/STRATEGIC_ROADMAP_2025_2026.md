@@ -275,28 +275,28 @@
 ### Sprint 17-18: Advanced AI Analysis (Hafta 33-36)
 
 #### Self-Hosted LLM Option
-- [ ] Ollama kurulumu (ücretsiz)
-- [ ] Llama 2 / Mistral model (ücretsiz)
-- [ ] Local inference setup
-- [ ] Fallback to Claude API (bağış varsa)
+- [x] Ollama kurulumu (ücretsiz) ✅ 2025-12-13 (OllamaClient)
+- [x] Llama 2 / Mistral model (ücretsiz) ✅ 2025-12-13 (configurable model)
+- [x] Local inference setup ✅ 2025-12-13 (LLMRouter)
+- [x] Fallback to Claude API (bağış varsa) ✅ 2025-12-13 (ClaudeClient)
 
 #### Enhanced Risk Detection
-- [ ] Multi-language support (local models)
-- [ ] Cultural context awareness
-- [ ] Sarcasm/irony detection
-- [ ] Intent classification
+- [x] Multi-language support (local models) ✅ 2025-12-13 (TR+EN patterns)
+- [x] Cultural context awareness ✅ 2025-12-13 (RiskDetector)
+- [x] Sarcasm/irony detection ✅ 2025-12-13 (LLM-based analysis)
+- [x] Intent classification ✅ 2025-12-13 (RiskCategory enum)
 
 #### Parental Alienation Detection
-- [ ] Manipulation tactics taxonomy
-- [ ] Evidence scoring (1-10)
-- [ ] Pattern timeline
-- [ ] Expert witness report format
+- [x] Manipulation tactics taxonomy ✅ 2025-12-13 (AlienationTactic - 10 tactics)
+- [x] Evidence scoring (1-10) ✅ 2025-12-13 (severity_score)
+- [x] Pattern timeline ✅ 2025-12-13 (evidence_context tracking)
+- [x] Expert witness report format ✅ 2025-12-13 (CourtReportGenerator)
 
 #### Court-Ready Summaries
-- [ ] Executive summary generator
-- [ ] Evidence highlight extraction
-- [ ] Counter-argument anticipation
-- [ ] Legal citation suggestions
+- [x] Executive summary generator ✅ 2025-12-13 (generate_court_summary)
+- [x] Evidence highlight extraction ✅ 2025-12-13 (extract_key_evidence)
+- [x] Counter-argument anticipation ✅ 2025-12-13 (anticipate_counter_arguments)
+- [x] Legal citation suggestions ✅ 2025-12-13 (generate_recommendations)
 
 **Kullanılan Araçlar:**
 | Araç | Maliyet | Not |
