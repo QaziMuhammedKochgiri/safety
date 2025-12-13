@@ -37,7 +37,10 @@ import {
   Sparkles,
   LayoutGrid,
   List,
-  Layers
+  Layers,
+  Download,
+  FileSpreadsheet,
+  Image
 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
@@ -102,6 +105,8 @@ export default function AdminCaseTimeline() {
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [showNewMilestoneModal, setShowNewMilestoneModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [templates, setTemplates] = useState([]);
 
   // Fetch functions
@@ -283,6 +288,50 @@ export default function AdminCaseTimeline() {
     } catch (error) {
       toast.error("Şablon uygulama hatası");
     }
+  };
+
+  // Export timeline
+  const exportTimeline = async (format) => {
+    if (!selectedCase) {
+      toast.error("Lütfen önce bir dava seçin");
+      return;
+    }
+    setExportLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/timeline/export/${selectedCase}?format=${format}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Export hatası");
+      }
+
+      // Get filename from Content-Disposition header
+      const contentDisposition = res.headers.get("Content-Disposition");
+      let filename = `timeline_${selectedCase}.${format}`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) filename = match[1];
+      }
+
+      // Create blob and download
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`${format.toUpperCase()} olarak indirildi`);
+      setShowExportModal(false);
+    } catch (error) {
+      toast.error(error.message || "Export hatası");
+    }
+    setExportLoading(false);
   };
 
   // Dashboard Stats Component
@@ -963,6 +1012,85 @@ export default function AdminCaseTimeline() {
     );
   };
 
+  // Export Modal
+  const ExportModal = () => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div className="p-6 border-b">
+          <h3 className="text-lg font-semibold text-gray-900">Zaman Çizelgesini Dışa Aktar</h3>
+          <p className="text-sm text-gray-500 mt-1">
+            Dava: {selectedCase || "Seçili değil"}
+          </p>
+        </div>
+        <div className="p-6 space-y-3">
+          {/* CSV Export */}
+          <button
+            onClick={() => exportTimeline("csv")}
+            disabled={exportLoading || !selectedCase}
+            className="w-full flex items-center gap-4 p-4 border rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors disabled:opacity-50"
+          >
+            <div className="p-3 bg-green-100 rounded-lg">
+              <FileSpreadsheet className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="text-left flex-1">
+              <h4 className="font-medium text-gray-900">CSV (Excel)</h4>
+              <p className="text-sm text-gray-500">Tablo formatında dışa aktar</p>
+            </div>
+            <Download className="w-5 h-5 text-gray-400" />
+          </button>
+
+          {/* PDF Export */}
+          <button
+            onClick={() => exportTimeline("pdf")}
+            disabled={exportLoading || !selectedCase}
+            className="w-full flex items-center gap-4 p-4 border rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            <div className="p-3 bg-red-100 rounded-lg">
+              <FileText className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="text-left flex-1">
+              <h4 className="font-medium text-gray-900">PDF Raporu</h4>
+              <p className="text-sm text-gray-500">Mahkemeye hazır profesyonel rapor</p>
+            </div>
+            <Download className="w-5 h-5 text-gray-400" />
+          </button>
+
+          {/* PNG Export */}
+          <button
+            onClick={() => exportTimeline("png")}
+            disabled={exportLoading || !selectedCase}
+            className="w-full flex items-center gap-4 p-4 border rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors disabled:opacity-50"
+          >
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <Image className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="text-left flex-1">
+              <h4 className="font-medium text-gray-900">PNG Görsel</h4>
+              <p className="text-sm text-gray-500">Sunumlar için görsel zaman çizelgesi</p>
+            </div>
+            <Download className="w-5 h-5 text-gray-400" />
+          </button>
+
+          {exportLoading && (
+            <div className="flex items-center justify-center py-4">
+              <RefreshCw className="w-5 h-5 text-indigo-600 animate-spin mr-2" />
+              <span className="text-sm text-gray-600">Hazırlanıyor...</span>
+            </div>
+          )}
+        </div>
+        <div className="p-4 border-t flex justify-end">
+          <button
+            onClick={() => setShowExportModal(false)}
+            disabled={exportLoading}
+            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+          >
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Template Modal
   const TemplateModal = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1034,15 +1162,25 @@ export default function AdminCaseTimeline() {
                 <p className="text-sm text-gray-500">Dava takibi ve görev yönetimi</p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                fetchDashboard();
-                fetchTasks();
-              }}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <RefreshCw className="w-5 h-5 text-gray-600" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowExportModal(true)}
+                disabled={!selectedCase}
+                className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4" />
+                Dışa Aktar
+              </button>
+              <button
+                onClick={() => {
+                  fetchDashboard();
+                  fetchTasks();
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <RefreshCw className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -1083,6 +1221,7 @@ export default function AdminCaseTimeline() {
       {/* Modals */}
       {showNewTaskModal && <NewTaskModal />}
       {showTemplateModal && <TemplateModal />}
+      {showExportModal && <ExportModal />}
     </div>
   );
 }

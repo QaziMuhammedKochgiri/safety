@@ -138,9 +138,9 @@
 - [x] Filter panel ✅ 2025-12-13
 
 #### Export
-- [ ] Timeline as image (PNG/SVG)
-- [ ] Timeline as PDF
-- [ ] Data as CSV
+- [x] Timeline as image (PNG/SVG) ✅ 2025-12-13 (timeline_export.py)
+- [x] Timeline as PDF ✅ 2025-12-13 (reportlab integration)
+- [x] Data as CSV ✅ 2025-12-13
 
 **Kullanılan Araçlar:**
 | Araç | Maliyet | Not |

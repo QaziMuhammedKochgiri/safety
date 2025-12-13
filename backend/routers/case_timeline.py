@@ -746,3 +746,146 @@ async def apply_milestone_template(
 
     logger.info(f"Applied template {template_id} to case {case_id}")
     return {"success": True, "milestones_created": len(created_milestones)}
+
+
+# =============================================================================
+# Timeline Export Endpoints
+# =============================================================================
+
+from fastapi.responses import StreamingResponse
+import io
+
+@router.get("/export/{case_id}")
+async def export_timeline(
+    case_id: str,
+    format: str = "csv",
+    current_user: dict = Depends(get_current_admin),
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+    Export case timeline in specified format.
+
+    Supported formats:
+    - csv: Spreadsheet-friendly data export
+    - pdf: Professional court-ready report
+    - png: Visual timeline diagram
+
+    Returns file download response.
+    """
+    from ..forensics.export import (
+        TimelineExporter, ExportFormat,
+        export_timeline_csv, export_timeline_pdf, export_timeline_png
+    )
+
+    # Validate format
+    format_lower = format.lower()
+    if format_lower not in ["csv", "pdf", "png"]:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {format}. Use csv, pdf, or png.")
+
+    # Get client info
+    client = await db.clients.find_one({"clientNumber": case_id})
+    client_name = client.get("fullName", "") if client else ""
+
+    # Get timeline events
+    events_cursor = db.timeline_events.find({"case_id": case_id}).sort("created_at", -1)
+    events = await events_cursor.to_list(length=500)
+
+    # Get tasks
+    tasks_cursor = db.tasks.find({"case_id": case_id}).sort("due_date", 1)
+    tasks = await tasks_cursor.to_list(length=200)
+
+    # Get milestones
+    milestones_cursor = db.milestones.find({"case_id": case_id}).sort("order", 1)
+    milestones = await milestones_cursor.to_list(length=50)
+
+    # Convert ObjectIds to strings
+    for event in events:
+        event["_id"] = str(event.get("_id", ""))
+    for task in tasks:
+        task["_id"] = str(task.get("_id", ""))
+    for milestone in milestones:
+        milestone["_id"] = str(milestone.get("_id", ""))
+
+    # Export based on format
+    if format_lower == "csv":
+        result = export_timeline_csv(case_id, events, tasks, milestones, client_name)
+    elif format_lower == "pdf":
+        result = export_timeline_pdf(case_id, events, tasks, milestones, client_name)
+    elif format_lower == "png":
+        result = export_timeline_png(case_id, events, tasks, milestones, client_name)
+
+    if not result.success:
+        raise HTTPException(status_code=500, detail=f"Export failed: {result.error}")
+
+    # Create timeline event for audit
+    await db.timeline_events.insert_one({
+        "event_id": f"EVT-{str(uuid.uuid4())[:12]}",
+        "case_id": case_id,
+        "event_type": EventType.CUSTOM.value,
+        "title": f"Timeline exported as {format_lower.upper()}",
+        "description": f"Exported by {current_user.get('email', 'admin')}",
+        "metadata": {
+            "format": format_lower,
+            "events_count": len(events),
+            "tasks_count": len(tasks),
+            "milestones_count": len(milestones)
+        },
+        "related_entity_id": None,
+        "related_entity_type": None,
+        "created_at": datetime.utcnow().isoformat(),
+        "created_by": current_user.get("email", "admin"),
+        "is_automated": True
+    })
+
+    logger.info(f"Timeline exported for case {case_id} as {format_lower}")
+
+    # Return file download
+    return StreamingResponse(
+        io.BytesIO(result.content_bytes),
+        media_type=result.content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{result.filename}"',
+            "X-Export-Events": str(len(events)),
+            "X-Export-Tasks": str(len(tasks)),
+            "X-Export-Milestones": str(len(milestones))
+        }
+    )
+
+
+@router.get("/export/{case_id}/formats")
+async def get_export_formats(
+    case_id: str,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Get available export formats and their status."""
+    from ..forensics.export import TimelineExporter
+
+    exporter = TimelineExporter(case_id)
+
+    return {
+        "formats": [
+            {
+                "id": "csv",
+                "name": "CSV (Spreadsheet)",
+                "description": "Export as comma-separated values for spreadsheet analysis",
+                "available": True,
+                "content_type": "text/csv"
+            },
+            {
+                "id": "pdf",
+                "name": "PDF Report",
+                "description": "Professional court-ready PDF report with visual timeline",
+                "available": exporter._pdf_available,
+                "content_type": "application/pdf",
+                "requires": "reportlab" if not exporter._pdf_available else None
+            },
+            {
+                "id": "png",
+                "name": "PNG Image",
+                "description": "Visual timeline diagram for presentations",
+                "available": exporter._png_available,
+                "content_type": "image/png",
+                "requires": "Pillow" if not exporter._png_available else None
+            }
+        ]
+    }
