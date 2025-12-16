@@ -3,14 +3,14 @@ AI Chat API Router
 Endpoints for user-friendly AI chat assistant.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
 
-from backend.ai.claude import ChatAssistant, ChatSession, ChatMessage, MessageType
+from backend.ai.claude import ChatAssistant, ChatSession, ChatMessage
 from backend.ai.claude import RiskAnalyzer, RiskAnalysisResult
 from backend.ai.claude import PetitionGenerator, PetitionType, CourtJurisdiction
 from backend.ai.claude import LegalTranslator, TranslationRequest, TranslationResult, TranslationType
@@ -19,7 +19,6 @@ from backend.ai.claude import EvidenceAnalyzer, EvidenceAnalysisRequest, Evidenc
 from backend.ai.claude import TimelineGenerator, TimelineGenerationRequest, TimelineEvent, EventType, EventSeverity
 from backend.ai.claude import CaseSummaryGenerator, CaseSummaryRequest
 from backend.auth import get_current_user
-from backend.models import User
 
 router = APIRouter(prefix="/ai", tags=["AI Assistant"])
 logger = logging.getLogger(__name__)
@@ -71,7 +70,7 @@ class QuickActionRequest(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def send_chat_message(
     request: ChatRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Send a message to AI chat assistant.
@@ -143,7 +142,7 @@ async def send_chat_message(
 @router.post("/analyze-risk", response_model=Dict[str, Any])
 async def analyze_case_risk(
     request: RiskAnalysisRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     **One-Click Risk Analysis**
@@ -203,7 +202,7 @@ async def analyze_case_risk(
 @router.post("/quick-action")
 async def execute_quick_action(
     request: QuickActionRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     **Execute one-click action.**
@@ -326,7 +325,7 @@ async def execute_quick_action(
 @router.get("/chat/history/{session_id}")
 async def get_chat_history(
     session_id: str,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get chat history for a session."""
     if session_id not in active_sessions:
@@ -361,7 +360,7 @@ async def get_chat_history(
 @router.post("/explain-term")
 async def explain_legal_term(
     term: str,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     **Explain Legal Term**
@@ -439,7 +438,7 @@ class PetitionGenerationRequest(BaseModel):
 @router.post("/generate-petition", response_model=Dict[str, Any])
 async def generate_court_petition(
     request: PetitionGenerationRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     **One-Click Court Petition Generator**
@@ -555,7 +554,7 @@ async def generate_court_petition(
 
 
 @router.get("/petition-types")
-async def get_petition_types(current_user: User = Depends(get_current_user)):
+async def get_petition_types(current_user: dict = Depends(get_current_user)):
     """
     Get available petition types with descriptions.
 
@@ -650,7 +649,7 @@ class BatchTranslationRequest(BaseModel):
 @router.post("/translate", response_model=Dict[str, Any])
 async def translate_legal_document(
     request: TranslationRequestModel,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Translate legal document with cultural and jurisdictional awareness.
@@ -745,7 +744,7 @@ async def translate_legal_document(
 @router.post("/translate-quick", response_model=Dict[str, Any])
 async def quick_translate(
     request: QuickTranslationRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Quick translation without detailed annotations.
@@ -793,7 +792,7 @@ async def quick_translate(
 @router.post("/translate-batch", response_model=Dict[str, Any])
 async def batch_translate(
     request: BatchTranslationRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Translate multiple texts in batch.
@@ -867,7 +866,7 @@ async def batch_translate(
 
 
 @router.get("/translation-languages")
-async def get_translation_languages(current_user: User = Depends(get_current_user)):
+async def get_translation_languages(current_user: dict = Depends(get_current_user)):
     """
     Get supported translation language pairs with descriptions.
 
@@ -980,7 +979,7 @@ class AlienationAnalysisRequestModel(BaseModel):
 @router.post("/analyze-alienation", response_model=Dict[str, Any])
 async def analyze_parental_alienation(
     request: AlienationAnalysisRequestModel,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Analyze case for parental alienation patterns.
@@ -1106,12 +1105,12 @@ async def analyze_parental_alienation(
 
 @router.post("/analyze-alienation-quick", response_model=Dict[str, Any])
 async def quick_alienation_analysis(
-    case_description: str = Field(..., min_length=10),
-    child_name: str = Field(..., min_length=1),
-    child_age: int = Field(..., ge=0, le=18),
-    alienating_parent: str = Field(..., min_length=1),
-    targeted_parent: str = Field(..., min_length=1),
-    current_user: User = Depends(get_current_user)
+    case_description: str = Body(..., min_length=10),
+    child_name: str = Body(..., min_length=1),
+    child_age: int = Body(..., ge=0, le=18),
+    alienating_parent: str = Body(..., min_length=1),
+    targeted_parent: str = Body(..., min_length=1),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Quick parental alienation screening.
@@ -1161,7 +1160,7 @@ async def quick_alienation_analysis(
 
 
 @router.get("/alienation-info")
-async def get_alienation_info(current_user: User = Depends(get_current_user)):
+async def get_alienation_info(current_user: dict = Depends(get_current_user)):
     """
     Get information about parental alienation detection.
 
@@ -1349,7 +1348,7 @@ class EvidenceAnalysisRequestModel(BaseModel):
 @router.post("/analyze-evidence", response_model=Dict[str, Any])
 async def analyze_case_evidence(
     request: EvidenceAnalysisRequestModel,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Analyze evidence items for court case.
@@ -1480,7 +1479,7 @@ async def analyze_case_evidence(
 
 
 @router.get("/evidence-types")
-async def get_evidence_types(current_user: User = Depends(get_current_user)):
+async def get_evidence_types(current_user: dict = Depends(get_current_user)):
     """
     Get all supported evidence types with descriptions.
     """
@@ -1597,7 +1596,7 @@ class TimelineGenerationRequestModel(BaseModel):
 @router.post("/generate-timeline", response_model=Dict[str, Any])
 async def generate_case_timeline(
     request: TimelineGenerationRequestModel,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Generate chronological timeline for court case.
@@ -1751,7 +1750,7 @@ class CaseSummaryRequestModel(BaseModel):
 @router.post("/generate-case-summary", response_model=Dict[str, Any])
 async def generate_comprehensive_case_summary(
     request: CaseSummaryRequestModel,
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Generate comprehensive case summary for court.
@@ -1864,7 +1863,7 @@ async def generate_comprehensive_case_summary(
 
 
 @router.get("/ai-features")
-async def get_all_ai_features(current_user: User = Depends(get_current_user)):
+async def get_all_ai_features(current_user: dict = Depends(get_current_user)):
     """
     Get complete list of all AI features available.
 

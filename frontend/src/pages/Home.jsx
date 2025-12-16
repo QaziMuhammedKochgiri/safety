@@ -5,7 +5,7 @@ import { t } from '../translations';
 import { mockStats } from '../mock';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Scale, Globe, Users, ArrowRight, Shield, FileText } from 'lucide-react';
+import { Scale, Globe, Users, ArrowRight, Shield, FileText, Brain, Fingerprint, Sparkles } from 'lucide-react';
 
 const Home = () => {
   const { language } = useLanguage();
@@ -196,6 +196,115 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Mobile Quick Access - AI & Forensics */}
+      <section className="py-16 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl mb-4 shadow-lg">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              {language === 'de' ? 'Unsere Hauptdienste' : 'Our Main Services'}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              {language === 'de'
+                ? 'Zugriff auf KI-gestützte Rechtsberatung und forensische Analyse'
+                : 'Access AI-powered legal assistance and forensic analysis'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* AI Features Card */}
+            <Link to="/dashboard">
+              <Card className="border-2 border-purple-200 hover:border-purple-500 hover:shadow-2xl transition-all duration-300 group cursor-pointer overflow-hidden">
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-xl">
+                      <Brain className="w-10 h-10 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+                        {language === 'de' ? '🤖 KI Features' : '🤖 AI Features'}
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        {language === 'de'
+                          ? 'Lawyer AI, Risikoanalyse, Petition Generator, Übersetzer und mehr'
+                          : 'Lawyer AI, Risk Analysis, Petition Generator, Translator and more'}
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center text-xs">
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full">24/7 AI Chat</span>
+                        <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full">{language === 'de' ? 'Risiko' : 'Risk'}</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">{language === 'de' ? 'Dokumente' : 'Documents'}</span>
+                        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">{language === 'de' ? 'Übersetzer' : 'Translator'}</span>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg group-hover:shadow-xl transition-all">
+                      {language === 'de' ? 'Zugriff auf KI Features' : 'Access AI Features'}
+                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+
+            {/* Forensics Card */}
+            <Link to="/forensic-analysis">
+              <Card className="border-2 border-indigo-200 hover:border-indigo-500 hover:shadow-2xl transition-all duration-300 group cursor-pointer overflow-hidden">
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center text-center space-y-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-xl">
+                      <Fingerprint className="w-10 h-10 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                        {language === 'de' ? '🔍 Forensik' : '🔍 Forensics'}
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        {language === 'de'
+                          ? 'WhatsApp, Telegram, SMS Analyse, Beweissammlung, Timeline Erstellung'
+                          : 'WhatsApp, Telegram, SMS Analysis, Evidence Collection, Timeline Creation'}
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center text-xs">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">WhatsApp</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full">Telegram</span>
+                        <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full">{language === 'de' ? 'Beweise' : 'Evidence'}</span>
+                        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full">Timeline</span>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-lg group-hover:shadow-xl transition-all">
+                      {language === 'de' ? 'Forensik starten' : 'Start Forensics'}
+                      <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+
+          {/* Additional Quick Links */}
+          <div className="mt-12 flex flex-wrap justify-center gap-4">
+            <Link to="/services">
+              <Button variant="outline" className="border-2 hover:bg-blue-50">
+                <Shield className="w-4 h-4 mr-2" />
+                {language === 'de' ? 'Alle Dienste' : 'All Services'}
+              </Button>
+            </Link>
+            <Link to="/documents">
+              <Button variant="outline" className="border-2 hover:bg-blue-50">
+                <FileText className="w-4 h-4 mr-2" />
+                {language === 'de' ? 'Dokumente' : 'Documents'}
+              </Button>
+            </Link>
+            <Link to="/faq">
+              <Button variant="outline" className="border-2 hover:bg-blue-50">
+                <Globe className="w-4 h-4 mr-2" />
+                FAQ
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Services Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -251,8 +360,8 @@ const Home = () => {
               <FileText className="w-10 h-10" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              {language === 'de' 
-                ? 'Bereit, für Ihre Rechte zu kämpfen?' 
+              {language === 'de'
+                ? 'Bereit, für Ihre Rechte zu kämpfen?'
                 : 'Ready to Fight for Your Rights?'}
             </h2>
             <p className="text-lg mb-8 opacity-90">

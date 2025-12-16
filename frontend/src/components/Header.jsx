@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { t } from '../translations';
 import { Button } from './ui/button';
-import { Globe, Menu, X } from 'lucide-react';
+import { Globe, Menu, X, ChevronDown, Sparkles, Brain, FileText, Languages, Shield, Package, Clock, Scale } from 'lucide-react';
 
 const Header = () => {
   const { language, toggleLanguage } = useLanguage();
+  const { user } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
 
   const navItems = [
     { path: '/', label: t(language, 'home') },
@@ -17,7 +20,18 @@ const Header = () => {
     { path: '/documents', label: t(language, 'documents') },
     { path: '/forensic-analysis', label: language === 'de' ? 'Forensik' : 'Forensics' },
     { path: '/faq', label: t(language, 'faq') },
-    { path: '/portal', label: language === 'de' ? 'Portal' : 'Portal' },
+  ];
+
+  const aiFeatures = [
+    { path: '/dashboard', label: language === 'de' ? '🏠 Haupt-Dashboard' : '🏠 Main Dashboard', icon: Sparkles },
+    { path: '/ai-chat', label: language === 'de' ? '🤖 Lawyer AI' : '🤖 Lawyer AI', icon: Brain },
+    { path: '/risk-analyzer', label: language === 'de' ? '⚠️ Risiko-Analyse' : '⚠️ Risk Analysis', icon: Shield },
+    { path: '/petition-generator', label: language === 'de' ? '📄 Antrag Generator' : '📄 Petition Generator', icon: FileText },
+    { path: '/translator', label: language === 'de' ? '🌍 Übersetzer' : '🌍 Translator', icon: Languages },
+    { path: '/alienation-detector', label: language === 'de' ? '👥 Entfremdung' : '👥 Alienation', icon: Shield },
+    { path: '/evidence-analyzer', label: language === 'de' ? '📦 Beweise' : '📦 Evidence', icon: Package },
+    { path: '/timeline-generator', label: language === 'de' ? '🕐 Zeitlinie' : '🕐 Timeline', icon: Clock },
+    { path: '/case-summary', label: language === 'de' ? '⚖️ Fall-Zusammenfassung' : '⚖️ Case Summary', icon: Scale },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -43,7 +57,7 @@ const Header = () => {
 
           <div className="flex items-center space-x-4">
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
+            <nav className="hidden md:flex items-center space-x-6">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
@@ -57,6 +71,48 @@ const Header = () => {
                   {item.label}
                 </Link>
               ))}
+
+              {/* AI Features Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setAiDropdownOpen(true)}
+                onMouseLeave={() => setAiDropdownOpen(false)}
+              >
+                <button
+                  className="flex items-center space-x-1 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{language === 'de' ? 'KI Features' : 'AI Features'}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${aiDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {aiDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl py-2 z-50">
+                    {aiFeatures.map((feature) => (
+                      <Link
+                        key={feature.path}
+                        to={feature.path}
+                        onClick={() => setAiDropdownOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      >
+                        <span className="mr-2">{feature.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Portal/Dashboard Link */}
+              <Link
+                to="/portal"
+                className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+                  isActive('/portal') || isActive('/dashboard')
+                    ? 'text-blue-600 border-b-2 border-blue-600 pb-1'
+                    : 'text-gray-700'
+                }`}
+              >
+                {user ? (language === 'de' ? 'Dashboard' : 'Dashboard') : (language === 'de' ? 'Portal' : 'Portal')}
+              </Link>
             </nav>
 
             {/* Language Toggle & CTA */}
@@ -107,6 +163,34 @@ const Header = () => {
                   {item.label}
                 </Link>
               ))}
+
+              {/* AI Features in Mobile */}
+              <>
+                <div className="text-xs font-semibold text-gray-500 uppercase pt-2 border-t">
+                  {language === 'de' ? 'KI Features' : 'AI Features'}
+                </div>
+                {aiFeatures.map((feature) => (
+                  <Link
+                    key={feature.path}
+                    to={feature.path}
+                    className="text-sm font-medium text-gray-700 hover:text-blue-600 pl-4"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {feature.label}
+                  </Link>
+                ))}
+              </>
+
+              <Link
+                to="/portal"
+                className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+                  isActive('/portal') ? 'text-blue-600' : 'text-gray-700'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {user ? (language === 'de' ? 'Dashboard' : 'Dashboard') : (language === 'de' ? 'Portal' : 'Portal')}
+              </Link>
+
               <div className="flex items-center space-x-4 pt-4 border-t">
                 <Button
                   variant="ghost"
