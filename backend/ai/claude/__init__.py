@@ -38,6 +38,20 @@ from .evidence_analyzer import (
     EvidenceCategory,
     AnalyzedEvidence
 )
+from .timeline_generator import (
+    TimelineGenerator,
+    TimelineGenerationRequest,
+    TimelineGenerationResult,
+    TimelineEvent,
+    TimelinePeriod,
+    EventType,
+    EventSeverity
+)
+from .case_summary_generator import (
+    CaseSummaryGenerator,
+    CaseSummaryRequest,
+    CaseSummaryResult
+)
 
 __all__ = [
     'ClaudeClient',
@@ -70,5 +84,15 @@ __all__ = [
     'EvidenceType',
     'EvidenceRelevance',
     'EvidenceCategory',
-    'AnalyzedEvidence'
+    'AnalyzedEvidence',
+    'TimelineGenerator',
+    'TimelineGenerationRequest',
+    'TimelineGenerationResult',
+    'TimelineEvent',
+    'TimelinePeriod',
+    'EventType',
+    'EventSeverity',
+    'CaseSummaryGenerator',
+    'CaseSummaryRequest',
+    'CaseSummaryResult'
 ]

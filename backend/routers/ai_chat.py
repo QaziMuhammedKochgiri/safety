@@ -16,6 +16,8 @@ from backend.ai.claude import PetitionGenerator, PetitionType, CourtJurisdiction
 from backend.ai.claude import LegalTranslator, TranslationRequest, TranslationResult, TranslationType
 from backend.ai.claude import AlienationDetector, AlienationAnalysisRequest, AlienationEvidence
 from backend.ai.claude import EvidenceAnalyzer, EvidenceAnalysisRequest, EvidenceItem, EvidenceType
+from backend.ai.claude import TimelineGenerator, TimelineGenerationRequest, TimelineEvent, EventType, EventSeverity
+from backend.ai.claude import CaseSummaryGenerator, CaseSummaryRequest
 from backend.auth import get_current_user
 from backend.models import User
 
@@ -29,6 +31,8 @@ petition_generator = PetitionGenerator()
 legal_translator = LegalTranslator()
 alienation_detector = AlienationDetector()
 evidence_analyzer = EvidenceAnalyzer()
+timeline_generator = TimelineGenerator()
+case_summary_generator = CaseSummaryGenerator()
 
 # In-memory session storage (replace with Redis/DB in production)
 active_sessions: Dict[str, ChatSession] = {}
@@ -1567,4 +1571,352 @@ async def get_evidence_types(current_user: User = Depends(get_current_user)):
             {"level": "low", "label": "Low", "description": "Background context", "color": "blue"},
             {"level": "minimal", "label": "Minimal", "description": "Not very relevant", "color": "gray"}
         ]
+    }
+
+
+# Timeline Generation - Week 4
+class TimelineEventModel(BaseModel):
+    """Timeline event for generation."""
+    event_id: str
+    date: str  # YYYY-MM-DD format
+    event_type: str  # incident, visitation, communication, legal_action, etc.
+    title: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    severity: Optional[str] = None  # critical, high, moderate, low, info
+    evidence_ids: Optional[List[str]] = None
+    participants: Optional[List[str]] = None
+
+
+class TimelineGenerationRequestModel(BaseModel):
+    """Timeline generation request."""
+    case_id: str
+    events: List[TimelineEventModel] = Field(..., min_items=1, max_items=200)
+    case_context: Optional[str] = None
+
+
+@router.post("/generate-timeline", response_model=Dict[str, Any])
+async def generate_case_timeline(
+    request: TimelineGenerationRequestModel,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate chronological timeline for court case.
+
+    **One-Click Timeline** ("Baş Yolla"):
+    - Input all events (incidents, visits, messages, etc.)
+    - AI organizes chronologically
+    - Identifies patterns and escalation
+    - Groups into meaningful periods
+    - Court-ready narrative generated
+
+    **Example:**
+    ```json
+    {
+      "case_id": "case_001",
+      "events": [
+        {
+          "event_id": "1",
+          "date": "2024-01-15",
+          "event_type": "incident",
+          "title": "First threatening message",
+          "description": "Ex-spouse sent threatening text",
+          "severity": "high"
+        },
+        {
+          "event_id": "2",
+          "date": "2024-02-10",
+          "event_type": "incident",
+          "title": "Bruises discovered",
+          "description": "Child returned with bruises after visit",
+          "severity": "critical"
+        }
+      ],
+      "case_context": "Custody case, pattern of escalating abuse"
+    }
+    ```
+
+    **Returns:**
+    - Organized chronological timeline
+    - Period analysis (escalation phases)
+    - Pattern identification
+    - Court narrative
+    - Key dates highlighted
+    """
+    try:
+        # Convert events
+        timeline_events = []
+        for event_model in request.events:
+            try:
+                event_type = EventType(event_model.event_type)
+            except ValueError:
+                event_type = EventType.INCIDENT
+
+            severity = None
+            if event_model.severity:
+                try:
+                    severity = EventSeverity(event_model.severity)
+                except ValueError:
+                    pass
+
+            timeline_events.append(TimelineEvent(
+                event_id=event_model.event_id,
+                date=event_model.date,
+                event_type=event_type,
+                title=event_model.title,
+                description=event_model.description,
+                severity=severity,
+                evidence_ids=event_model.evidence_ids or [],
+                participants=event_model.participants or []
+            ))
+
+        # Build timeline request
+        timeline_request = TimelineGenerationRequest(
+            case_id=request.case_id,
+            events=timeline_events,
+            case_context=request.case_context
+        )
+
+        # Generate timeline
+        result = await timeline_generator.generate_timeline(timeline_request)
+
+        logger.info(
+            f"Timeline generated for case {request.case_id}: "
+            f"{result.total_events} events, {len(result.periods)} periods"
+        )
+
+        return {
+            "success": True,
+            "timeline_id": result.timeline_id,
+            "case_id": result.case_id,
+            "total_events": result.total_events,
+            "date_range": result.date_range,
+            "organized_events": result.organized_events,
+            "periods": [
+                {
+                    "period_name": period.period_name,
+                    "start_date": period.start_date,
+                    "end_date": period.end_date,
+                    "summary": period.summary,
+                    "key_events": period.key_events,
+                    "pattern_analysis": period.pattern_analysis
+                }
+                for period in result.periods
+            ],
+            "pattern_summary": result.pattern_summary,
+            "escalation_analysis": result.escalation_analysis,
+            "key_dates": result.key_dates,
+            "frequency_analysis": result.frequency_analysis,
+            "visual_timeline_description": result.visual_timeline_description,
+            "narrative_summary": result.narrative_summary,
+            "opening_statement_timeline": result.opening_statement_timeline,
+            "critical_events_highlighted": result.critical_events_highlighted,
+            "generated_at": result.generated_at.isoformat(),
+            "model_used": result.model_used,
+            "tokens_used": result.tokens_used
+        }
+
+    except Exception as e:
+        logger.error(f"Timeline generation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to generate timeline. Please try again later."
+        )
+
+
+# Case Summary Generation - Week 4
+class CaseSummaryRequestModel(BaseModel):
+    """Comprehensive case summary request."""
+    case_id: str
+    petitioner_name: str = Field(..., min_length=1)
+    respondent_name: str = Field(..., min_length=1)
+    child_name: str = Field(..., min_length=1)
+    child_age: int = Field(..., ge=0, le=18)
+    case_type: str = "custody"
+    case_description: str = Field(..., min_length=10)
+    relief_requested: List[str] = Field(..., min_items=1)
+
+    # Optional summaries from other analyses
+    timeline_summary: Optional[str] = None
+    evidence_summary: Optional[str] = None
+    risk_analysis_summary: Optional[str] = None
+    alienation_analysis_summary: Optional[str] = None
+
+    # Additional context
+    jurisdiction: Optional[str] = None
+    previous_orders: Optional[List[str]] = None
+    medical_concerns: Optional[List[str]] = None
+    safety_concerns: Optional[List[str]] = None
+
+
+@router.post("/generate-case-summary", response_model=Dict[str, Any])
+async def generate_comprehensive_case_summary(
+    request: CaseSummaryRequestModel,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate comprehensive case summary for court.
+
+    **Complete "Baş Yolla" Package**:
+    - Pulls together ALL case information
+    - Creates 1-page executive summary
+    - Detailed multi-page summary
+    - Talking points for court
+    - Proposed findings and conclusions
+    - Settlement position
+
+    **Perfect For:**
+    - Court filing packages
+    - Attorney consultations
+    - Mediation preparation
+    - Settlement negotiations
+
+    **Example:**
+    ```json
+    {
+      "case_id": "case_001",
+      "petitioner_name": "Jane Doe",
+      "respondent_name": "John Doe",
+      "child_name": "Emma Doe",
+      "child_age": 7,
+      "case_type": "custody",
+      "case_description": "Seeking primary custody due to abuse and neglect...",
+      "relief_requested": [
+        "Primary physical custody",
+        "Supervised visitation only",
+        "Child support"
+      ],
+      "evidence_summary": "5 incidents documented with photos...",
+      "risk_analysis_summary": "High risk (8.5/10) for child safety...",
+      "safety_concerns": ["Physical abuse", "Substance abuse"]
+    }
+    ```
+
+    **Returns:**
+    - One-page summary (for judges/clerks)
+    - Detailed summary (full case)
+    - Elevator pitch (2-3 sentences)
+    - Legal arguments
+    - Talking points
+    - Settlement position
+    """
+    try:
+        # Build case summary request
+        summary_request = CaseSummaryRequest(
+            case_id=request.case_id,
+            petitioner_name=request.petitioner_name,
+            respondent_name=request.respondent_name,
+            child_name=request.child_name,
+            child_age=request.child_age,
+            case_type=request.case_type,
+            case_description=request.case_description,
+            relief_requested=request.relief_requested,
+            timeline_summary=request.timeline_summary,
+            evidence_summary=request.evidence_summary,
+            risk_analysis_summary=request.risk_analysis_summary,
+            alienation_analysis_summary=request.alienation_analysis_summary,
+            jurisdiction=request.jurisdiction,
+            previous_orders=request.previous_orders,
+            medical_concerns=request.medical_concerns,
+            safety_concerns=request.safety_concerns
+        )
+
+        # Generate summary
+        result = await case_summary_generator.generate_summary(summary_request)
+
+        logger.info(
+            f"Case summary generated for {request.case_id}: "
+            f"{len(result.key_facts)} facts, {len(result.legal_issues)} issues"
+        )
+
+        return {
+            "success": True,
+            "summary_id": result.summary_id,
+            "case_id": result.case_id,
+            "one_page_summary": result.one_page_summary,
+            "detailed_summary": result.detailed_summary,
+            "elevator_pitch": result.elevator_pitch,
+            "background": result.background,
+            "key_facts": result.key_facts,
+            "legal_issues": result.legal_issues,
+            "evidence_highlights": result.evidence_highlights,
+            "child_impact": result.child_impact,
+            "safety_concerns_summary": result.safety_concerns_summary,
+            "legal_basis": result.legal_basis,
+            "supporting_precedents": result.supporting_precedents,
+            "relief_justification": result.relief_justification,
+            "proposed_findings_of_fact": result.proposed_findings_of_fact,
+            "proposed_conclusions_of_law": result.proposed_conclusions_of_law,
+            "urgency_statement": result.urgency_statement,
+            "talking_points": result.talking_points,
+            "questions_for_opposing_counsel": result.questions_for_opposing_counsel,
+            "settlement_position": result.settlement_position,
+            "generated_at": result.generated_at.isoformat(),
+            "model_used": result.model_used,
+            "tokens_used": result.tokens_used
+        }
+
+    except Exception as e:
+        logger.error(f"Case summary generation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to generate case summary. Please try again later."
+        )
+
+
+@router.get("/ai-features")
+async def get_all_ai_features(current_user: User = Depends(get_current_user)):
+    """
+    Get complete list of all AI features available.
+
+    Returns overview of all AI-powered tools for SafeChild platform.
+    """
+    return {
+        "week_1_2": {
+            "chat_assistant": {
+                "endpoint": "/api/ai/chat",
+                "description": "User-friendly chat for 40+ women",
+                "features": ["Simple language", "Quick actions", "Empathetic responses"]
+            },
+            "risk_analyzer": {
+                "endpoint": "/api/ai/analyze-risk",
+                "description": "Child safety risk assessment",
+                "features": ["Risk scoring (0-10)", "Immediate actions", "Parent-friendly summaries"]
+            },
+            "petition_generator": {
+                "endpoint": "/api/ai/generate-petition",
+                "description": "Court petition generation",
+                "features": ["6 petition types", "Multi-jurisdiction", "Court-ready documents"]
+            }
+        },
+        "week_3": {
+            "legal_translator": {
+                "endpoint": "/api/ai/translate",
+                "description": "Legal document translation",
+                "features": ["TR↔EN, DE↔EN", "Cultural context", "Terminology notes"]
+            },
+            "alienation_detector": {
+                "endpoint": "/api/ai/analyze-alienation",
+                "description": "Parental alienation detection",
+                "features": ["10 tactics", "5 severity levels", "Court documentation"]
+            }
+        },
+        "week_4": {
+            "evidence_analyzer": {
+                "endpoint": "/api/ai/analyze-evidence",
+                "description": "Evidence organization & analysis",
+                "features": ["11 evidence types", "Relevance scoring", "Court presentation order"]
+            },
+            "timeline_generator": {
+                "endpoint": "/api/ai/generate-timeline",
+                "description": "Chronological timeline creation",
+                "features": ["Pattern detection", "Escalation analysis", "Period grouping"]
+            },
+            "case_summary_generator": {
+                "endpoint": "/api/ai/generate-case-summary",
+                "description": "Comprehensive case summary",
+                "features": ["1-page summary", "Talking points", "Settlement position"]
+            }
+        },
+        "total_endpoints": 13,
+        "philosophy": "Baş Yolla - One-click simplicity for 40+ women with minimal tech experience"
     }
