@@ -55,6 +55,10 @@ import AdminCourtPackage from "./pages/AdminCourtPackage";
 import AdminVoiceBiometrics from "./pages/AdminVoiceBiometrics";
 import AdminExpertNetwork from "./pages/AdminExpertNetwork";
 
+// User AI Pages
+import AIChat from "./pages/AIChat";
+import UserDashboard from "./pages/UserDashboard";
+
 function App() {
   return (
     <LanguageProvider>
@@ -111,7 +115,11 @@ function App() {
               
               {/* Portal route - protected */}
               <Route path="/portal" element={<ProtectedRoute><Portal /></ProtectedRoute>} />
-              
+
+              {/* User AI Pages - protected */}
+              <Route path="/ai-chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+
               {/* Magic Link Route (Simple Interface) */}
               <Route path="/upload-request/:token" element={<MagicUpload />} />
 
