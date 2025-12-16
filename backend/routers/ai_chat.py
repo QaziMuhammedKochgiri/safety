@@ -14,6 +14,7 @@ from backend.ai.claude import ChatAssistant, ChatSession, ChatMessage, MessageTy
 from backend.ai.claude import RiskAnalyzer, RiskAnalysisResult
 from backend.ai.claude import PetitionGenerator, PetitionType, CourtJurisdiction
 from backend.ai.claude import LegalTranslator, TranslationRequest, TranslationResult, TranslationType
+from backend.ai.claude import AlienationDetector, AlienationAnalysisRequest, AlienationEvidence
 from backend.auth import get_current_user
 from backend.models import User
 
@@ -25,6 +26,7 @@ chat_assistant = ChatAssistant()
 risk_analyzer = RiskAnalyzer()
 petition_generator = PetitionGenerator()
 legal_translator = LegalTranslator()
+alienation_detector = AlienationDetector()
 
 # In-memory session storage (replace with Redis/DB in production)
 active_sessions: Dict[str, ChatSession] = {}
@@ -947,5 +949,372 @@ async def get_translation_languages(current_user: User = Depends(get_current_use
                 "description": "Legal letter/email translation",
                 "icon": "✉️"
             }
+        ]
+    }
+
+
+# Parental Alienation Detection
+class AlienationAnalysisRequestModel(BaseModel):
+    """Parental alienation analysis request."""
+    case_id: str
+    child_name: str = Field(..., min_length=1)
+    child_age: int = Field(..., ge=0, le=18)
+    alienating_parent: str = Field(..., min_length=1)
+    targeted_parent: str = Field(..., min_length=1)
+    case_description: str = Field(..., min_length=10)
+
+    # Optional detailed information
+    custody_arrangement: Optional[str] = None
+    relationship_history: Optional[str] = None
+    child_statements: Optional[List[str]] = None
+    behavioral_changes: Optional[List[str]] = None
+    evidence_items: Optional[List[Dict[str, Any]]] = None
+
+
+@router.post("/analyze-alienation", response_model=Dict[str, Any])
+async def analyze_parental_alienation(
+    request: AlienationAnalysisRequestModel,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Analyze case for parental alienation patterns.
+
+    **Critical Feature for Custody Cases:**
+    - Detects 10 common alienation tactics
+    - Provides severity assessment (none/mild/moderate/severe/critical)
+    - Generates court-ready documentation
+    - Suggests evidence collection strategies
+
+    **Example:**
+    ```json
+    {
+      "case_id": "case_001",
+      "child_name": "Emma",
+      "child_age": 8,
+      "alienating_parent": "John Doe",
+      "targeted_parent": "Jane Doe",
+      "case_description": "Father constantly tells child that mother doesn't love her...",
+      "child_statements": [
+        "Daddy says mommy doesn't want me",
+        "I don't want to see mommy anymore"
+      ],
+      "behavioral_changes": [
+        "Child refuses video calls with mother",
+        "Child becomes anxious before visits"
+      ]
+    }
+    ```
+
+    **Returns:**
+    ```json
+    {
+      "severity": "moderate",
+      "severity_score": 6.5,
+      "detected_tactics": [
+        {
+          "tactic": "badmouthing",
+          "description": "...",
+          "court_relevance": "..."
+        }
+      ],
+      "immediate_actions": ["Document all incidents", "Request therapy", ...],
+      "executive_summary": "Court-ready summary..."
+    }
+    ```
+    """
+    try:
+        # Convert evidence items if provided
+        evidence_items = []
+        if request.evidence_items:
+            for item in request.evidence_items:
+                evidence_items.append(AlienationEvidence(
+                    evidence_type=item.get("evidence_type", "incident"),
+                    description=item.get("description", ""),
+                    date=item.get("date"),
+                    source=item.get("source"),
+                    severity_contribution=item.get("severity_contribution", 0.5)
+                ))
+
+        # Build analysis request
+        analysis_request = AlienationAnalysisRequest(
+            case_id=request.case_id,
+            child_name=request.child_name,
+            child_age=request.child_age,
+            alienating_parent=request.alienating_parent,
+            targeted_parent=request.targeted_parent,
+            case_description=request.case_description,
+            evidence_items=evidence_items,
+            custody_arrangement=request.custody_arrangement,
+            relationship_history=request.relationship_history,
+            child_statements=request.child_statements,
+            behavioral_changes=request.behavioral_changes
+        )
+
+        # Analyze
+        result = await alienation_detector.analyze_case(analysis_request)
+
+        logger.info(
+            f"Alienation analysis completed for case {request.case_id}: "
+            f"{result.severity.value} (score {result.severity_score:.1f}/10)"
+        )
+
+        return {
+            "success": True,
+            "analysis_id": result.analysis_id,
+            "case_id": result.case_id,
+            "severity": result.severity.value,
+            "severity_score": result.severity_score,
+            "confidence": result.confidence,
+            "detected_tactics": [
+                {
+                    "tactic": tactic.tactic.value,
+                    "description": tactic.description,
+                    "evidence_references": tactic.evidence_references,
+                    "severity": tactic.severity,
+                    "court_relevance": tactic.court_relevance
+                }
+                for tactic in result.detected_tactics
+            ],
+            "primary_concerns": result.primary_concerns,
+            "behavioral_indicators": result.behavioral_indicators,
+            "child_impact_assessment": result.child_impact_assessment,
+            "long_term_risks": result.long_term_risks,
+            "immediate_actions": result.immediate_actions,
+            "documentation_suggestions": result.documentation_suggestions,
+            "court_presentation_tips": result.court_presentation_tips,
+            "executive_summary": result.executive_summary,
+            "evidence_summary": result.evidence_summary,
+            "expert_opinion": result.expert_opinion,
+            "analyzed_at": result.analyzed_at.isoformat(),
+            "model_used": result.model_used,
+            "tokens_used": result.tokens_used
+        }
+
+    except Exception as e:
+        logger.error(f"Alienation analysis error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to analyze case for parental alienation. Please try again later."
+        )
+
+
+@router.post("/analyze-alienation-quick", response_model=Dict[str, Any])
+async def quick_alienation_analysis(
+    case_description: str = Field(..., min_length=10),
+    child_name: str = Field(..., min_length=1),
+    child_age: int = Field(..., ge=0, le=18),
+    alienating_parent: str = Field(..., min_length=1),
+    targeted_parent: str = Field(..., min_length=1),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Quick parental alienation screening.
+
+    Perfect for initial assessment with minimal information.
+
+    **Example:**
+    ```
+    POST /api/ai/analyze-alienation-quick
+    {
+      "case_description": "Ex-husband tells our 7-year-old that I abandoned the family...",
+      "child_name": "Sophie",
+      "child_age": 7,
+      "alienating_parent": "Michael Smith",
+      "targeted_parent": "Lisa Smith"
+    }
+    ```
+    """
+    try:
+        result = await alienation_detector.quick_analysis(
+            case_description=case_description,
+            child_name=child_name,
+            child_age=child_age,
+            alienating_parent=alienating_parent,
+            targeted_parent=targeted_parent
+        )
+
+        return {
+            "success": True,
+            "severity": result.severity.value,
+            "severity_score": result.severity_score,
+            "confidence": result.confidence,
+            "primary_concerns": result.primary_concerns[:5],  # Top 5
+            "immediate_actions": result.immediate_actions[:3],  # Top 3
+            "detected_tactics": [
+                {"tactic": t.tactic.value, "description": t.description}
+                for t in result.detected_tactics[:5]  # Top 5 tactics
+            ]
+        }
+
+    except Exception as e:
+        logger.error(f"Quick alienation analysis error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to analyze case. Please try again later."
+        )
+
+
+@router.get("/alienation-info")
+async def get_alienation_info(current_user: User = Depends(get_current_user)):
+    """
+    Get information about parental alienation detection.
+
+    Returns explanations of tactics, severity levels, and what to document.
+    """
+    return {
+        "alienation_tactics": [
+            {
+                "tactic": "badmouthing",
+                "label": "Badmouthing",
+                "description": "Repeatedly criticizing or demeaning the other parent to the child",
+                "examples": [
+                    "Telling child 'Your mother doesn't love you'",
+                    "Calling other parent insulting names in front of child"
+                ],
+                "icon": "🗣️"
+            },
+            {
+                "tactic": "limiting_contact",
+                "label": "Limiting Contact",
+                "description": "Restricting phone calls, visits, or communication with other parent",
+                "examples": [
+                    "Not answering phone during scheduled call times",
+                    "Claiming child is 'too busy' to talk"
+                ],
+                "icon": "📵"
+            },
+            {
+                "tactic": "creating_conflict",
+                "label": "Creating Conflict",
+                "description": "Forcing child to choose sides or demonstrate loyalty",
+                "examples": [
+                    "Asking 'Who do you love more?'",
+                    "Making child feel guilty for enjoying time with other parent"
+                ],
+                "icon": "⚔️"
+            },
+            {
+                "tactic": "false_allegations",
+                "label": "False Allegations",
+                "description": "Making untrue accusations of abuse or neglect",
+                "examples": [
+                    "Falsely claiming abuse to authorities",
+                    "Exaggerating minor incidents"
+                ],
+                "icon": "⚠️"
+            },
+            {
+                "tactic": "interfering_visitation",
+                "label": "Interfering with Visitation",
+                "description": "Finding excuses to cancel or shorten visits",
+                "examples": [
+                    "Last-minute cancellations",
+                    "Scheduling conflicting activities during visitation"
+                ],
+                "icon": "🚫"
+            },
+            {
+                "tactic": "emotional_manipulation",
+                "label": "Emotional Manipulation",
+                "description": "Using guilt, fear, or emotional blackmail on child",
+                "examples": [
+                    "Saying 'If you love me, you won't see your father'",
+                    "Acting sad or upset when child returns from visit"
+                ],
+                "icon": "😢"
+            },
+            {
+                "tactic": "erasing_parent",
+                "label": "Erasing the Parent",
+                "description": "Removing photos, gifts, or mentions of other parent from child's life",
+                "examples": [
+                    "Removing all photos of other parent",
+                    "Throwing away gifts from other parent"
+                ],
+                "icon": "🗑️"
+            },
+            {
+                "tactic": "withholding_info",
+                "label": "Withholding Information",
+                "description": "Not sharing school, medical, or important updates",
+                "examples": [
+                    "Not informing about school events",
+                    "Hiding medical information"
+                ],
+                "icon": "🤐"
+            },
+            {
+                "tactic": "rewarding_rejection",
+                "label": "Rewarding Rejection",
+                "description": "Praising child for refusing to see other parent",
+                "examples": [
+                    "Giving treats when child refuses visit",
+                    "Expressing pride when child rejects other parent"
+                ],
+                "icon": "🎁"
+            },
+            {
+                "tactic": "undermining_authority",
+                "label": "Undermining Authority",
+                "description": "Disrespecting or invalidating other parent's rules and decisions",
+                "examples": [
+                    "Telling child to ignore other parent's rules",
+                    "Contradicting other parent's discipline"
+                ],
+                "icon": "👎"
+            }
+        ],
+        "severity_levels": [
+            {
+                "level": "none",
+                "label": "No Alienation",
+                "score_range": "0-1",
+                "description": "No signs of parental alienation detected",
+                "color": "green"
+            },
+            {
+                "level": "mild",
+                "label": "Mild",
+                "score_range": "2-4",
+                "description": "Early warning signs present, preventable with intervention",
+                "color": "yellow",
+                "action": "Monitor situation, document incidents"
+            },
+            {
+                "level": "moderate",
+                "label": "Moderate",
+                "score_range": "5-6",
+                "description": "Clear alienation pattern established, intervention needed",
+                "color": "orange",
+                "action": "Seek therapy, consider legal action"
+            },
+            {
+                "level": "severe",
+                "label": "Severe",
+                "score_range": "7-8",
+                "description": "Advanced alienation, therapeutic intervention required",
+                "color": "red",
+                "action": "Emergency therapy, custody modification needed"
+            },
+            {
+                "level": "critical",
+                "label": "Critical",
+                "score_range": "9-10",
+                "description": "Complete rejection, emergency intervention required",
+                "color": "darkred",
+                "action": "Immediate court action, emergency custody change"
+            }
+        ],
+        "what_to_document": [
+            "Date, time, and description of each incident",
+            "Exact words said by alienating parent (if known)",
+            "Child's statements and reactions",
+            "Behavioral changes in child",
+            "Cancelled or interfered visits",
+            "Withheld information about child",
+            "Messages, emails, or texts showing alienation",
+            "Witness accounts",
+            "Photos or videos (if appropriate)",
+            "School or therapy reports"
         ]
     }

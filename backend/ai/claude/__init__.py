@@ -19,6 +19,15 @@ from .legal_translator import (
     TranslationResult,
     TranslationType
 )
+from .alienation_detector import (
+    AlienationDetector,
+    AlienationAnalysisRequest,
+    AlienationAnalysisResult,
+    AlienationSeverity,
+    AlienationTactic,
+    AlienationEvidence,
+    DetectedTactic
+)
 
 __all__ = [
     'ClaudeClient',
@@ -36,5 +45,12 @@ __all__ = [
     'LegalTranslator',
     'TranslationRequest',
     'TranslationResult',
-    'TranslationType'
+    'TranslationType',
+    'AlienationDetector',
+    'AlienationAnalysisRequest',
+    'AlienationAnalysisResult',
+    'AlienationSeverity',
+    'AlienationTactic',
+    'AlienationEvidence',
+    'DetectedTactic'
 ]
