@@ -53,7 +53,8 @@ from .routers import (
     voice_biometrics,
     expert_network,
     evidence_agent,
-    multilingual
+    multilingual,
+    ai_chat  # Claude AI Integration (2025)
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -288,6 +289,9 @@ api_router.include_router(voice_biometrics.router)
 api_router.include_router(expert_network.router)
 api_router.include_router(evidence_agent.router)
 api_router.include_router(multilingual.router)
+
+# Claude AI Integration (2025) - User-friendly chat & risk analysis
+api_router.include_router(ai_chat.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)
