@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Search, Edit, Trash2, Eye, Mail, Phone, MapPin, Upload, Plus } from 'lucide-react';
+import EnhancedClientView from '../components/EnhancedClientView';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -245,38 +246,14 @@ const AdminClients = () => {
         )}
       </div>
 
-      {/* View Dialog */}
-      <Dialog open={viewDialog} onOpenChange={setViewDialog}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Client Details</DialogTitle>
-          </DialogHeader>
-          {selectedClient && (
-            <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Name</Label>
-                  <p className="font-medium">{selectedClient?.client?.firstName || ''} {selectedClient?.client?.lastName || ''}</p>
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <p className="font-medium">{selectedClient?.client?.email || '-'}</p>
-                </div>
-              </div>
-              <div>
-                <Label>Documents ({selectedClient?.documents?.length || 0})</Label>
-                <div className="mt-2 space-y-2">
-                  {(selectedClient?.documents || []).map(doc => (
-                    <div key={doc.documentNumber} className="text-sm p-2 bg-gray-50 rounded">
-                      {doc.fileName}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Enhanced Client View */}
+      {viewDialog && selectedClient && (
+        <EnhancedClientView
+          clientData={selectedClient}
+          onClose={() => setViewDialog(false)}
+          token={token}
+        />
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
