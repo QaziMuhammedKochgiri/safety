@@ -13,6 +13,7 @@ import logging
 from backend.ai.claude import ChatAssistant, ChatSession, ChatMessage, MessageType
 from backend.ai.claude import RiskAnalyzer, RiskAnalysisResult
 from backend.ai.claude import PetitionGenerator, PetitionType, CourtJurisdiction
+from backend.ai.claude import LegalTranslator, TranslationRequest, TranslationResult, TranslationType
 from backend.auth import get_current_user
 from backend.models import User
 
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 chat_assistant = ChatAssistant()
 risk_analyzer = RiskAnalyzer()
 petition_generator = PetitionGenerator()
+legal_translator = LegalTranslator()
 
 # In-memory session storage (replace with Redis/DB in production)
 active_sessions: Dict[str, ChatSession] = {}
@@ -603,5 +605,347 @@ async def get_petition_types(current_user: User = Depends(get_current_user)):
             {"code": "de", "name": "Deutsch (German)"},
             {"code": "fr", "name": "Français (French)"},
             {"code": "es", "name": "Español (Spanish)"}
+        ]
+    }
+
+
+# Translation Request/Response Models
+class TranslationRequestModel(BaseModel):
+    """Legal document translation request."""
+    source_text: str = Field(..., min_length=1, max_length=50000)
+    source_language: str = Field(..., pattern="^[a-z]{2}$")
+    target_language: str = Field(..., pattern="^[a-z]{2}$")
+    translation_type: str = "document"  # document, terminology, evidence, petition, correspondence
+    source_jurisdiction: Optional[str] = None
+    target_jurisdiction: Optional[str] = None
+    legal_domain: Optional[str] = None
+    preserve_legal_force: bool = True
+    include_annotations: bool = True
+    cultural_adaptation: bool = True
+
+
+class QuickTranslationRequest(BaseModel):
+    """Quick translation without annotations."""
+    text: str = Field(..., min_length=1, max_length=10000)
+    source_language: str = Field(..., pattern="^[a-z]{2}$")
+    target_language: str = Field(..., pattern="^[a-z]{2}$")
+
+
+class BatchTranslationRequest(BaseModel):
+    """Batch translation request."""
+    texts: List[str] = Field(..., min_items=1, max_items=50)
+    source_language: str = Field(..., pattern="^[a-z]{2}$")
+    target_language: str = Field(..., pattern="^[a-z]{2}$")
+    translation_type: str = "document"
+
+
+@router.post("/translate", response_model=Dict[str, Any])
+async def translate_legal_document(
+    request: TranslationRequestModel,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Translate legal document with cultural and jurisdictional awareness.
+
+    **Features:**
+    - AI-powered legal translation
+    - Preserves legal precision
+    - Cultural context adaptation
+    - Terminology notes
+    - False friends warnings
+
+    **Example:**
+    ```json
+    {
+      "source_text": "Velayet davası açmak istiyorum.",
+      "source_language": "tr",
+      "target_language": "en",
+      "translation_type": "document",
+      "source_jurisdiction": "turkey"
+    }
+    ```
+
+    **Returns:**
+    ```json
+    {
+      "translated_text": "I want to file a custody petition.",
+      "confidence": 0.95,
+      "terminology_notes": [...],
+      "cultural_notes": [...],
+      "warnings": [...]
+    }
+    ```
+    """
+    try:
+        # Validate translation type
+        try:
+            translation_type_enum = TranslationType(request.translation_type)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid translation type: {request.translation_type}"
+            )
+
+        # Build translation request
+        translation_request = TranslationRequest(
+            source_text=request.source_text,
+            source_language=request.source_language,
+            target_language=request.target_language,
+            translation_type=translation_type_enum,
+            source_jurisdiction=request.source_jurisdiction,
+            target_jurisdiction=request.target_jurisdiction,
+            legal_domain=request.legal_domain,
+            preserve_legal_force=request.preserve_legal_force,
+            include_annotations=request.include_annotations,
+            cultural_adaptation=request.cultural_adaptation
+        )
+
+        # Translate
+        result = await legal_translator.translate(translation_request)
+
+        logger.info(
+            f"Translation completed: {request.source_language} -> {request.target_language}, "
+            f"confidence {result.confidence:.2f}"
+        )
+
+        return {
+            "success": True,
+            "translation_id": result.translation_id,
+            "translated_text": result.translated_text,
+            "source_language": result.source_language,
+            "target_language": result.target_language,
+            "confidence": result.confidence,
+            "legal_accuracy": result.legal_accuracy,
+            "cultural_appropriateness": result.cultural_appropriateness,
+            "terminology_notes": result.terminology_notes,
+            "cultural_notes": result.cultural_notes,
+            "warnings": result.warnings,
+            "false_friends": result.false_friends,
+            "translated_at": result.translated_at.isoformat(),
+            "model_used": result.model_used,
+            "tokens_used": result.tokens_used
+        }
+
+    except Exception as e:
+        logger.error(f"Translation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to translate document. Please try again later."
+        )
+
+
+@router.post("/translate-quick", response_model=Dict[str, Any])
+async def quick_translate(
+    request: QuickTranslationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Quick translation without detailed annotations.
+
+    Perfect for simple queries and short texts.
+
+    **Example:**
+    ```json
+    {
+      "text": "Merhaba",
+      "source_language": "tr",
+      "target_language": "en"
+    }
+    ```
+
+    **Returns:**
+    ```json
+    {
+      "translated_text": "Hello"
+    }
+    ```
+    """
+    try:
+        translated_text = await legal_translator.quick_translate(
+            text=request.text,
+            source_lang=request.source_language,
+            target_lang=request.target_language
+        )
+
+        return {
+            "success": True,
+            "translated_text": translated_text,
+            "source_language": request.source_language,
+            "target_language": request.target_language
+        }
+
+    except Exception as e:
+        logger.error(f"Quick translation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to translate text. Please try again later."
+        )
+
+
+@router.post("/translate-batch", response_model=Dict[str, Any])
+async def batch_translate(
+    request: BatchTranslationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Translate multiple texts in batch.
+
+    **Example:**
+    ```json
+    {
+      "texts": ["Velayet", "Nafaka", "Görüşme hakkı"],
+      "source_language": "tr",
+      "target_language": "en",
+      "translation_type": "terminology"
+    }
+    ```
+
+    **Returns:**
+    ```json
+    {
+      "translations": [
+        {"original": "Velayet", "translated": "Custody"},
+        {"original": "Nafaka", "translated": "Child support"},
+        {"original": "Görüşme hakkı", "translated": "Visitation rights"}
+      ]
+    }
+    ```
+    """
+    try:
+        # Validate translation type
+        try:
+            translation_type_enum = TranslationType(request.translation_type)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid translation type: {request.translation_type}"
+            )
+
+        # Batch translate
+        results = await legal_translator.translate_batch(
+            texts=request.texts,
+            source_language=request.source_language,
+            target_language=request.target_language,
+            translation_type=translation_type_enum
+        )
+
+        translations = []
+        for i, result in enumerate(results):
+            translations.append({
+                "original": request.texts[i],
+                "translated": result.translated_text,
+                "confidence": result.confidence
+            })
+
+        logger.info(
+            f"Batch translation completed: {len(translations)} items, "
+            f"{request.source_language} -> {request.target_language}"
+        )
+
+        return {
+            "success": True,
+            "count": len(translations),
+            "translations": translations,
+            "source_language": request.source_language,
+            "target_language": request.target_language
+        }
+
+    except Exception as e:
+        logger.error(f"Batch translation error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to translate batch. Please try again later."
+        )
+
+
+@router.get("/translation-languages")
+async def get_translation_languages(current_user: User = Depends(get_current_user)):
+    """
+    Get supported translation language pairs with descriptions.
+
+    Returns all available language pairs for legal translation.
+    """
+    return {
+        "language_pairs": [
+            {
+                "source": "tr",
+                "target": "en",
+                "source_name": "Turkish",
+                "target_name": "English",
+                "description": "Turkish to English legal translation",
+                "jurisdictions": ["turkey", "eu"]
+            },
+            {
+                "source": "en",
+                "target": "tr",
+                "source_name": "English",
+                "target_name": "Turkish",
+                "description": "English to Turkish legal translation",
+                "jurisdictions": ["turkey", "eu"]
+            },
+            {
+                "source": "de",
+                "target": "en",
+                "source_name": "German",
+                "target_name": "English",
+                "description": "German to English legal translation",
+                "jurisdictions": ["germany", "eu"]
+            },
+            {
+                "source": "en",
+                "target": "de",
+                "source_name": "English",
+                "target_name": "German",
+                "description": "English to German legal translation",
+                "jurisdictions": ["germany", "eu"]
+            },
+            {
+                "source": "tr",
+                "target": "de",
+                "source_name": "Turkish",
+                "target_name": "German",
+                "description": "Turkish to German legal translation",
+                "jurisdictions": ["turkey", "germany", "eu"]
+            },
+            {
+                "source": "de",
+                "target": "tr",
+                "source_name": "German",
+                "target_name": "Turkish",
+                "description": "German to Turkish legal translation",
+                "jurisdictions": ["turkey", "germany", "eu"]
+            }
+        ],
+        "translation_types": [
+            {
+                "type": "document",
+                "label": "Full Document",
+                "description": "Complete legal document translation",
+                "icon": "📄"
+            },
+            {
+                "type": "terminology",
+                "label": "Legal Terms",
+                "description": "Legal terminology translation",
+                "icon": "📖"
+            },
+            {
+                "type": "evidence",
+                "label": "Evidence Description",
+                "description": "Evidence documentation translation",
+                "icon": "🔍"
+            },
+            {
+                "type": "petition",
+                "label": "Court Petition",
+                "description": "Court petition translation",
+                "icon": "⚖️"
+            },
+            {
+                "type": "correspondence",
+                "label": "Legal Correspondence",
+                "description": "Legal letter/email translation",
+                "icon": "✉️"
+            }
         ]
     }

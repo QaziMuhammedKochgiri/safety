@@ -13,6 +13,12 @@ from .petition_generator import (
     PetitionType,
     CourtJurisdiction
 )
+from .legal_translator import (
+    LegalTranslator,
+    TranslationRequest,
+    TranslationResult,
+    TranslationType
+)
 
 __all__ = [
     'ClaudeClient',
@@ -26,5 +32,9 @@ __all__ = [
     'GeneratedPetition',
     'PetitionRequest',
     'PetitionType',
-    'CourtJurisdiction'
+    'CourtJurisdiction',
+    'LegalTranslator',
+    'TranslationRequest',
+    'TranslationResult',
+    'TranslationType'
 ]
