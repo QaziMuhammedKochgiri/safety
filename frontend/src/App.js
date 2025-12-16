@@ -60,6 +60,11 @@ import AIChat from "./pages/AIChat";
 import UserDashboard from "./pages/UserDashboard";
 import RiskAnalyzer from "./pages/RiskAnalyzer";
 import PetitionGenerator from "./pages/PetitionGenerator";
+import LegalTranslator from "./pages/LegalTranslator";
+import AlienationDetector from "./pages/AlienationDetector";
+import EvidenceAnalyzer from "./pages/EvidenceAnalyzer";
+import TimelineGenerator from "./pages/TimelineGenerator";
+import CaseSummary from "./pages/CaseSummary";
 
 function App() {
   return (
@@ -123,6 +128,11 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
               <Route path="/risk-analyzer" element={<ProtectedRoute><RiskAnalyzer /></ProtectedRoute>} />
               <Route path="/petition-generator" element={<ProtectedRoute><PetitionGenerator /></ProtectedRoute>} />
+              <Route path="/translator" element={<ProtectedRoute><LegalTranslator /></ProtectedRoute>} />
+              <Route path="/alienation-detector" element={<ProtectedRoute><AlienationDetector /></ProtectedRoute>} />
+              <Route path="/evidence-analyzer" element={<ProtectedRoute><EvidenceAnalyzer /></ProtectedRoute>} />
+              <Route path="/timeline-generator" element={<ProtectedRoute><TimelineGenerator /></ProtectedRoute>} />
+              <Route path="/case-summary" element={<ProtectedRoute><CaseSummary /></ProtectedRoute>} />
 
               {/* Magic Link Route (Simple Interface) */}
               <Route path="/upload-request/:token" element={<MagicUpload />} />
