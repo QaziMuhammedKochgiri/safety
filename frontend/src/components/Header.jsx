@@ -4,7 +4,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { t } from '../translations';
 import { Button } from './ui/button';
-import { Globe, Menu, X, ChevronDown, Sparkles, Brain, FileText, Languages, Shield, Package, Clock, Scale } from 'lucide-react';
+import { Globe, Menu, X, ChevronDown, Sparkles, Brain, FileText, Languages, Shield, Package, Clock, Scale, LogIn } from 'lucide-react';
+import LoginModal from './LoginModal';
 
 const Header = () => {
   const { language, toggleLanguage } = useLanguage();
@@ -12,6 +13,7 @@ const Header = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const navItems = [
     { path: '/', label: t(language, 'home') },
@@ -37,6 +39,9 @@ const Header = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
+    <>
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -126,6 +131,17 @@ const Header = () => {
                 <Globe className="w-4 h-4" />
                 <span className="font-semibold">{language.toUpperCase()}</span>
               </Button>
+
+              {/* Login Button */}
+              {!user && (
+                <Button
+                  onClick={() => setShowLoginModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  {language === 'de' ? 'Anmelden' : 'Login'}
+                </Button>
+              )}
               <a href="mailto:info@safechild.mom">
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   {t(language, 'contact')}
@@ -212,6 +228,7 @@ const Header = () => {
         )}
       </div>
     </header>
+    </>
   );
 };
 
