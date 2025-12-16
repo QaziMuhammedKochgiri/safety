@@ -4,7 +4,13 @@ SafeChild Forensics Engine V2
 Phase 2: Complete implementation with all parsers and analyzers
 """
 
-import pytsk3
+try:
+    import pytsk3
+    PYTSK3_AVAILABLE = True
+except ImportError:
+    PYTSK3_AVAILABLE = False
+    pytsk3 = None
+
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
@@ -22,25 +28,30 @@ class SafeChildForensicsEngine:
     """
     
     def __init__(self):
-        self.tsk_version = pytsk3.TSK_VERSION_STR
+        if PYTSK3_AVAILABLE:
+            self.tsk_version = pytsk3.TSK_VERSION_STR
+        else:
+            self.tsk_version = "Not Available (pytsk3 not installed)"
+
         self.output_base = Path(__file__).parent.parent.parent / "forensic_outputs"
         self.output_base.mkdir(exist_ok=True, parents=True)
-        
+
         # Initialize parsers
         self.whatsapp_parser = WhatsAppParser()
         self.telegram_parser = TelegramParser()
         self.sms_parser = SMSParser()
         self.signal_parser = SignalParser()
-        
+
         # Initialize analyzers
         self.timeline_analyzer = TimelineAnalyzer()
         self.contact_analyzer = ContactNetworkAnalyzer()
         self.media_analyzer = MediaAnalyzer()
-        
+
         # Initialize reporters
         self.pdf_reporter = PDFReportGenerator()
-        
-        print(f"✅ SafeChild Forensics Engine V2 initialized (TSK {self.tsk_version})")
+
+        tsk_status = f"TSK {self.tsk_version}" if PYTSK3_AVAILABLE else "TSK not available"
+        print(f"✅ SafeChild Forensics Engine V2 initialized ({tsk_status})")
         print(f"   📱 Parsers: WhatsApp, Telegram, SMS, Signal")
         print(f"   📊 Analyzers: Timeline, Contacts, Media")
         print(f"   📄 Reporters: PDF, TXT")
