@@ -95,48 +95,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-white border-y">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
-                {mockStats.cases}
-              </div>
-              <div className="text-sm md:text-base text-gray-600">
-                {t(language, 'statsCases')}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
-                {mockStats.lawyers}
-              </div>
-              <div className="text-sm md:text-base text-gray-600">
-                {t(language, 'statsLawyers')}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
-                {mockStats.countries}
-              </div>
-              <div className="text-sm md:text-base text-gray-600">
-                {t(language, 'statsCountries')}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
-                {mockStats.experience}
-              </div>
-              <div className="text-sm md:text-base text-gray-600">
-                {t(language, 'statsExperience')}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Hague Convention Countries */}
-      <section className="py-16 bg-gradient-to-br from-blue-50 to-white">
+      {/* Mobile Quick Access - AI & Forensics */}
+      <section className="py-16 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -340,6 +300,94 @@ const Home = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-white border-y">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
+                {mockStats.cases}
+              </div>
+              <div className="text-sm md:text-base text-gray-600">
+                {t(language, 'statsCases')}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
+                {mockStats.lawyers}
+              </div>
+              <div className="text-sm md:text-base text-gray-600">
+                {t(language, 'statsLawyers')}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
+                {mockStats.countries}
+              </div>
+              <div className="text-sm md:text-base text-gray-600">
+                {t(language, 'statsCountries')}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2">
+                {mockStats.experience}
+              </div>
+              <div className="text-sm md:text-base text-gray-600">
+                {t(language, 'statsExperience')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Hague Convention Countries */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              {language === 'de'
+                ? 'Haager Übereinkommen - Vertragsstaaten'
+                : 'Hague Convention - Member States'}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              {language === 'de'
+                ? 'Wir vertreten Fälle in allen Vertragsstaaten des Haager Übereinkommens über die zivilrechtlichen Aspekte internationaler Kindesentführung'
+                : 'We represent cases in all member states of the Hague Convention on the Civil Aspects of International Child Abduction'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            {[
+              'Albania', 'Andorra', 'Argentina', 'Armenia', 'Australia',
+              'Austria', 'Azerbaijan', 'Bahamas', 'Belarus', 'Belgium',
+              'Belize', 'Bosnia and Herzegovina', 'Brazil', 'Bulgaria', 'Burkina Faso',
+              'Canada', 'Chile', 'China (Hong Kong, Macau)', 'Colombia', 'Costa Rica',
+              'Croatia', 'Cyprus', 'Czech Republic', 'Denmark', 'Dominican Republic',
+              'Ecuador', 'El Salvador', 'Estonia', 'Fiji', 'Finland',
+              'France', 'Georgia', 'Germany', 'Greece', 'Guatemala',
+              'Honduras', 'Hungary', 'Iceland', 'Ireland', 'Israel',
+              'Italy', 'Japan', 'Kazakhstan', 'Latvia', 'Lithuania',
+              'Luxembourg', 'Malta', 'Mauritius', 'Mexico', 'Moldova',
+              'Monaco', 'Montenegro', 'Morocco', 'Netherlands', 'New Zealand',
+              'Nicaragua', 'North Macedonia', 'Norway', 'Panama', 'Paraguay',
+              'Peru', 'Poland', 'Portugal', 'Romania', 'Russia',
+              'San Marino', 'Serbia', 'Seychelles', 'Singapore', 'Slovakia',
+              'Slovenia', 'South Africa', 'South Korea', 'Spain', 'Sri Lanka',
+              'Sweden', 'Switzerland', 'Thailand', 'Trinidad and Tobago', 'Turkey',
+              'Turkmenistan', 'Ukraine', 'United Kingdom', 'United States', 'Uruguay',
+              'Uzbekistan', 'Venezuela', 'Vietnam', 'Zimbabwe'
+            ].map((country, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-lg p-3 text-center hover:border-blue-500 hover:shadow-md transition-all duration-200 text-sm"
+              >
+                {country}
+              </div>
+            ))}
           </div>
         </div>
       </section>
