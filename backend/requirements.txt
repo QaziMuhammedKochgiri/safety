@@ -80,7 +80,7 @@ anthropic>=0.40.0
 # Phase 1 Q1: iOS + Cloud + Recovery
 # iOS backup parsing (stdlib - plistlib, sqlite3 already included)
 # WhatsApp cloud backup decryption
-wa-crypt-tools>=0.9.0
+wa-crypt-tools>=0.1.0
 # Google Drive API
 google-api-python-client>=2.100.0
 google-auth-oauthlib>=1.1.0
