@@ -28,6 +28,16 @@ from .alienation_detector import (
     AlienationEvidence,
     DetectedTactic
 )
+from .evidence_analyzer import (
+    EvidenceAnalyzer,
+    EvidenceAnalysisRequest,
+    EvidenceAnalysisResult,
+    EvidenceItem,
+    EvidenceType,
+    EvidenceRelevance,
+    EvidenceCategory,
+    AnalyzedEvidence
+)
 
 __all__ = [
     'ClaudeClient',
@@ -52,5 +62,13 @@ __all__ = [
     'AlienationSeverity',
     'AlienationTactic',
     'AlienationEvidence',
-    'DetectedTactic'
+    'DetectedTactic',
+    'EvidenceAnalyzer',
+    'EvidenceAnalysisRequest',
+    'EvidenceAnalysisResult',
+    'EvidenceItem',
+    'EvidenceType',
+    'EvidenceRelevance',
+    'EvidenceCategory',
+    'AnalyzedEvidence'
 ]

@@ -15,6 +15,7 @@ from backend.ai.claude import RiskAnalyzer, RiskAnalysisResult
 from backend.ai.claude import PetitionGenerator, PetitionType, CourtJurisdiction
 from backend.ai.claude import LegalTranslator, TranslationRequest, TranslationResult, TranslationType
 from backend.ai.claude import AlienationDetector, AlienationAnalysisRequest, AlienationEvidence
+from backend.ai.claude import EvidenceAnalyzer, EvidenceAnalysisRequest, EvidenceItem, EvidenceType
 from backend.auth import get_current_user
 from backend.models import User
 
@@ -27,6 +28,7 @@ risk_analyzer = RiskAnalyzer()
 petition_generator = PetitionGenerator()
 legal_translator = LegalTranslator()
 alienation_detector = AlienationDetector()
+evidence_analyzer = EvidenceAnalyzer()
 
 # In-memory session storage (replace with Redis/DB in production)
 active_sessions: Dict[str, ChatSession] = {}
@@ -1316,5 +1318,253 @@ async def get_alienation_info(current_user: User = Depends(get_current_user)):
             "Witness accounts",
             "Photos or videos (if appropriate)",
             "School or therapy reports"
+        ]
+    }
+
+
+# Evidence Analysis
+class EvidenceItemModel(BaseModel):
+    """Evidence item for analysis."""
+    evidence_id: str
+    evidence_type: str  # text_message, email, photo, video, audio, document, etc.
+    title: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    date_occurred: Optional[str] = None
+    date_collected: Optional[str] = None
+    source: Optional[str] = None
+
+
+class EvidenceAnalysisRequestModel(BaseModel):
+    """Evidence analysis request."""
+    case_id: str
+    evidence_items: List[EvidenceItemModel] = Field(..., min_items=1, max_items=100)
+    case_context: Optional[str] = None
+    analysis_purpose: str = "custody"
+
+
+@router.post("/analyze-evidence", response_model=Dict[str, Any])
+async def analyze_case_evidence(
+    request: EvidenceAnalysisRequestModel,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Analyze evidence items for court case.
+
+    **One-Click Evidence Organization** ("Baş Yolla"):
+    - Upload all evidence (messages, photos, documents)
+    - AI analyzes relevance and legal significance
+    - Gets organized timeline and presentation order
+    - Court-ready evidence summary generated
+
+    **Example:**
+    ```json
+    {
+      "case_id": "case_001",
+      "evidence_items": [
+        {
+          "evidence_id": "1",
+          "evidence_type": "text_message",
+          "title": "Threatening message from ex-spouse",
+          "description": "Text saying 'You'll never see the kids again'",
+          "date_occurred": "2024-12-01"
+        },
+        {
+          "evidence_id": "2",
+          "evidence_type": "photo",
+          "title": "Bruises on child's arm",
+          "description": "Photo showing bruising after visit with father",
+          "date_occurred": "2024-12-05"
+        }
+      ],
+      "case_context": "Custody case, seeking primary custody due to abuse"
+    }
+    ```
+
+    **Returns:**
+    ```json
+    {
+      "evidence_strength": 8.5,
+      "critical_items": 2,
+      "analyzed_items": [...],
+      "evidence_timeline": [...],
+      "presentation_order": ["2", "1", "3"],
+      "executive_summary": "...",
+      "gaps_identified": ["Need medical records", ...],
+      "recommendations": [...]
+    }
+    ```
+    """
+    try:
+        # Convert evidence items
+        evidence_items = []
+        for item in request.evidence_items:
+            try:
+                evidence_type = EvidenceType(item.evidence_type)
+            except ValueError:
+                # Default to document if type unknown
+                evidence_type = EvidenceType.DOCUMENT
+
+            evidence_items.append(EvidenceItem(
+                evidence_id=item.evidence_id,
+                evidence_type=evidence_type,
+                title=item.title,
+                description=item.description,
+                date_occurred=item.date_occurred,
+                date_collected=item.date_collected,
+                source=item.source
+            ))
+
+        # Build analysis request
+        analysis_request = EvidenceAnalysisRequest(
+            case_id=request.case_id,
+            evidence_items=evidence_items,
+            case_context=request.case_context,
+            analysis_purpose=request.analysis_purpose
+        )
+
+        # Analyze
+        result = await evidence_analyzer.analyze_evidence(analysis_request)
+
+        logger.info(
+            f"Evidence analysis completed for case {request.case_id}: "
+            f"{result.total_items} items, {result.critical_items} critical, "
+            f"strength {result.evidence_strength:.1f}/10"
+        )
+
+        return {
+            "success": True,
+            "analysis_id": result.analysis_id,
+            "case_id": result.case_id,
+            "total_items": result.total_items,
+            "critical_items": result.critical_items,
+            "evidence_strength": result.evidence_strength,
+            "confidence": result.confidence,
+            "analyzed_items": [
+                {
+                    "evidence_id": item.evidence_id,
+                    "relevance": item.relevance.value,
+                    "relevance_score": item.relevance_score,
+                    "categories": [cat.value for cat in item.categories],
+                    "key_findings": item.key_findings,
+                    "legal_significance": item.legal_significance,
+                    "court_presentation": item.court_presentation,
+                    "potential_challenges": item.potential_challenges,
+                    "corroboration_needed": item.corroboration_needed,
+                    "related_evidence": item.related_evidence,
+                    "timeline_position": item.timeline_position
+                }
+                for item in result.analyzed_items
+            ],
+            "executive_summary": result.executive_summary,
+            "evidence_timeline": result.evidence_timeline,
+            "strength_analysis": result.strength_analysis,
+            "gaps_identified": result.gaps_identified,
+            "recommendations": result.recommendations,
+            "presentation_order": result.presentation_order,
+            "opening_statement_points": result.opening_statement_points,
+            "analyzed_at": result.analyzed_at.isoformat(),
+            "model_used": result.model_used,
+            "tokens_used": result.tokens_used
+        }
+
+    except Exception as e:
+        logger.error(f"Evidence analysis error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to analyze evidence. Please try again later."
+        )
+
+
+@router.get("/evidence-types")
+async def get_evidence_types(current_user: User = Depends(get_current_user)):
+    """
+    Get all supported evidence types with descriptions.
+    """
+    return {
+        "evidence_types": [
+            {
+                "type": "text_message",
+                "label": "Text Messages",
+                "description": "SMS, WhatsApp, iMessage, etc.",
+                "icon": "💬",
+                "examples": ["Threatening messages", "Parental alienation texts"]
+            },
+            {
+                "type": "email",
+                "label": "Emails",
+                "description": "Email correspondence",
+                "icon": "📧",
+                "examples": ["Custody arrangement emails", "Threats via email"]
+            },
+            {
+                "type": "photo",
+                "label": "Photos",
+                "description": "Visual evidence (bruises, living conditions, etc.)",
+                "icon": "📷",
+                "examples": ["Bruises on child", "Unsafe living conditions"]
+            },
+            {
+                "type": "video",
+                "label": "Videos",
+                "description": "Video recordings",
+                "icon": "🎥",
+                "examples": ["Recorded incidents", "Child's statements"]
+            },
+            {
+                "type": "audio",
+                "label": "Audio Recordings",
+                "description": "Voice recordings, phone calls",
+                "icon": "🎤",
+                "examples": ["Threatening voicemails", "Recorded conversations"]
+            },
+            {
+                "type": "document",
+                "label": "Documents",
+                "description": "Legal documents, records",
+                "icon": "📄",
+                "examples": ["Court orders", "Custody agreements"]
+            },
+            {
+                "type": "social_media",
+                "label": "Social Media",
+                "description": "Facebook, Instagram, Twitter posts",
+                "icon": "📱",
+                "examples": ["Posts showing substance abuse", "Location check-ins"]
+            },
+            {
+                "type": "witness_statement",
+                "label": "Witness Statements",
+                "description": "Written or recorded witness accounts",
+                "icon": "👥",
+                "examples": ["Neighbor statements", "Teacher observations"]
+            },
+            {
+                "type": "medical_record",
+                "label": "Medical Records",
+                "description": "Medical documentation",
+                "icon": "🏥",
+                "examples": ["Injury reports", "Therapy notes"]
+            },
+            {
+                "type": "police_report",
+                "label": "Police Reports",
+                "description": "Law enforcement documentation",
+                "icon": "🚔",
+                "examples": ["Domestic violence reports", "Incident reports"]
+            },
+            {
+                "type": "school_record",
+                "label": "School Records",
+                "description": "Academic and behavioral records",
+                "icon": "🏫",
+                "examples": ["Attendance records", "Behavioral changes"]
+            }
+        ],
+        "relevance_levels": [
+            {"level": "critical", "label": "Critical", "description": "Essential to proving the case", "color": "red"},
+            {"level": "high", "label": "High", "description": "Very important, strongly supports case", "color": "orange"},
+            {"level": "moderate", "label": "Moderate", "description": "Supportive, adds to overall picture", "color": "yellow"},
+            {"level": "low", "label": "Low", "description": "Background context", "color": "blue"},
+            {"level": "minimal", "label": "Minimal", "description": "Not very relevant", "color": "gray"}
         ]
     }
