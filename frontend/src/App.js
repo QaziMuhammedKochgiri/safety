@@ -58,6 +58,8 @@ import AdminExpertNetwork from "./pages/AdminExpertNetwork";
 // User AI Pages
 import AIChat from "./pages/AIChat";
 import UserDashboard from "./pages/UserDashboard";
+import RiskAnalyzer from "./pages/RiskAnalyzer";
+import PetitionGenerator from "./pages/PetitionGenerator";
 
 function App() {
   return (
@@ -119,6 +121,8 @@ function App() {
               {/* User AI Pages - protected */}
               <Route path="/ai-chat" element={<ProtectedRoute><AIChat /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+              <Route path="/risk-analyzer" element={<ProtectedRoute><RiskAnalyzer /></ProtectedRoute>} />
+              <Route path="/petition-generator" element={<ProtectedRoute><PetitionGenerator /></ProtectedRoute>} />
 
               {/* Magic Link Route (Simple Interface) */}
               <Route path="/upload-request/:token" element={<MagicUpload />} />
