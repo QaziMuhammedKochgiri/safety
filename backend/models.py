@@ -195,3 +195,157 @@ class SharedReportLink(BaseModel):
     expiresAt: datetime
     createdAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     isRevoked: bool = False
+
+# ============================================================================
+# Phone Recovery Models
+# ============================================================================
+
+class DeviceInfo(BaseModel):
+    device_type: str  # "android" | "ios"
+    device_model: Optional[str] = None
+    os_version: Optional[str] = None
+    serial_number: Optional[str] = None
+    storage_total: Optional[int] = None  # in bytes
+    connection_type: str  # "usb" | "wireless"
+
+class DataCategories(BaseModel):
+    photos: bool = True
+    videos: bool = True
+    messages: bool = True
+    contacts: bool = True
+    call_logs: bool = True
+    deleted_data: bool = True
+    app_data: bool = True
+
+class BackupFileInfo(BaseModel):
+    file_name: str
+    file_size: int
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    checksum_sha256: Optional[str] = None
+    encrypted_path: Optional[str] = None
+    encryption_metadata: Optional[Dict] = None
+
+class RecoveryStatistics(BaseModel):
+    photos: int = 0
+    videos: int = 0
+    messages: int = 0
+    contacts: int = 0
+    call_logs: int = 0
+    deleted_files: int = 0
+    app_files: int = 0
+    total_size: int = 0
+
+class ProcessedData(BaseModel):
+    extracted_dir: Optional[str] = None
+    statistics: Optional[RecoveryStatistics] = None
+    deleted_files_recovered: int = 0
+    processing_time_seconds: int = 0
+
+class RecoveryResults(BaseModel):
+    zip_path: Optional[str] = None
+    zip_size: int = 0
+    checksum_sha256: Optional[str] = None
+    encrypted: bool = True
+
+class DeletionSchedule(BaseModel):
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    auto_delete_at: datetime  # 15 days from creation
+    deleted_at: Optional[datetime] = None
+
+class RecoveryCustodyEvent(BaseModel):
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    actor: str  # "Admin: user@example.com" | "Client: client@example.com" | "System"
+    action: str  # "LINK_CREATED", "DEVICE_CONNECTED", "BACKUP_UPLOADED", etc.
+    details: str
+
+class PhoneRecoveryCase(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    case_id: str  # "RECOVERY_SC2025001_20251217"
+    client_number: str
+    recovery_method: str  # "usb" | "wireless"
+
+    # Wireless recovery fields
+    recovery_code: Optional[str] = None  # 8-char short code for client
+    full_token: Optional[str] = None  # Full UUID token
+    expires_at: Optional[datetime] = None
+
+    # Device information
+    device_info: Optional[DeviceInfo] = None
+
+    # Recovery options
+    data_categories: DataCategories = Field(default_factory=DataCategories)
+
+    # Status tracking
+    status: str = "pending"  # "pending" | "backup_ready" | "processing" | "completed" | "failed" | "expired"
+    progress_percent: int = 0
+    current_step: Optional[str] = None
+
+    # Backup file (for wireless recovery)
+    backup_file: Optional[BackupFileInfo] = None
+
+    # Processing results
+    processed: Optional[ProcessedData] = None
+
+    # Results package
+    results: Optional[RecoveryResults] = None
+
+    # Auto-deletion schedule (15 days)
+    deletion_schedule: Optional[DeletionSchedule] = None
+
+    # Chain of custody audit trail
+    chain_of_custody: List[RecoveryCustodyEvent] = []
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: Optional[datetime] = None
+
+class RecoveryProcessingJob(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    job_id: str
+    case_id: str  # References PhoneRecoveryCase.case_id
+
+    status: str = "queued"  # "queued" | "extracting" | "carving" | "packaging" | "completed" | "failed"
+    progress_percent: int = 0
+    current_step: Optional[str] = None
+
+    started_at: Optional[datetime] = None
+    estimated_completion: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+    errors: List[Dict] = []  # [{timestamp, message, severity}]
+
+# Request/Response models for API
+class CreateRecoveryLinkRequest(BaseModel):
+    client_number: str
+    device_type: str  # "android" | "ios"
+    data_categories: Optional[DataCategories] = None
+    expires_in_days: int = 15
+
+class CreateRecoveryLinkResponse(BaseModel):
+    case_id: str
+    recovery_code: str  # 8-char short code
+    recovery_link: str  # Full URL for client
+    apk_download_link: Optional[str] = None  # Android APK download
+    expires_at: datetime
+
+class USBDeviceInfo(BaseModel):
+    device_id: str
+    device_type: str  # "android" | "ios"
+    device_model: Optional[str] = None
+    serial_number: Optional[str] = None
+    is_authorized: bool = False
+    storage_info: Optional[Dict] = None
+
+class StartUSBRecoveryRequest(BaseModel):
+    device_id: str
+    client_number: str
+    data_categories: Optional[DataCategories] = None
+
+class RecoveryStatusResponse(BaseModel):
+    case_id: str
+    status: str
+    progress_percent: int
+    current_step: Optional[str] = None
+    statistics: Optional[RecoveryStatistics] = None
+    download_ready: bool = False

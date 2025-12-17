@@ -47,18 +47,22 @@ from .routers import (
     device_comparison,
     dashboard,
     # Phase 2 (2026) AI Module Routers
-    alienation,
+    # alienation,  # Disabled - replaced by ai_chat alienation features
     risk_predictor,
     court_package,
     voice_biometrics,
     expert_network,
     evidence_agent,
     multilingual,
-    ai_chat  # Claude AI Integration (2025)
+    ai_chat,  # Claude AI Integration (2025)
+    # Phone Recovery (2025)
+    usb_recovery,
+    wireless_recovery,
 )
 from . import db
 from .logging_config import setup_logging, get_logger
 from .middleware import RateLimitMiddleware, RequestLoggingMiddleware, SecurityHeadersMiddleware
+from .services.cleanup_scheduler import start_cleanup_scheduler, stop_cleanup_scheduler
 
 # Initialize logging
 logger = get_logger("safechild.server")
@@ -88,9 +92,24 @@ async def lifespan(app: FastAPI):
     # Create indexes for better performance
     await create_indexes(db.db)
 
+    # Start cleanup scheduler for phone recovery auto-deletion
+    try:
+        await start_cleanup_scheduler(db.db)
+        logger.info("Cleanup scheduler started")
+    except Exception as e:
+        logger.warning(f"Cleanup scheduler startup warning: {e}")
+
     yield
 
     logger.info("Shutting down SafeChild API server...")
+
+    # Stop cleanup scheduler
+    try:
+        await stop_cleanup_scheduler()
+        logger.info("Cleanup scheduler stopped")
+    except Exception as e:
+        logger.warning(f"Cleanup scheduler shutdown warning: {e}")
+
     db.client.close()
     logger.info("MongoDB connection closed")
 
@@ -128,6 +147,17 @@ async def create_indexes(database):
         # Shared reports
         await database.shared_reports.create_index("token", unique=True)
         await database.shared_reports.create_index("expiresAt")
+
+        # Phone recovery cases
+        await database.phone_recovery_cases.create_index("case_id", unique=True)
+        await database.phone_recovery_cases.create_index("client_number")
+        await database.phone_recovery_cases.create_index("recovery_code")
+        await database.phone_recovery_cases.create_index("status")
+        # TTL index for auto-deletion after 15 days
+        await database.phone_recovery_cases.create_index(
+            "deletion_schedule.auto_delete_at",
+            expireAfterSeconds=0
+        )
 
         logger.info("Database indexes created successfully")
     except Exception as e:
@@ -282,7 +312,7 @@ api_router.include_router(device_comparison.router)
 api_router.include_router(dashboard.router)
 
 # Phase 2 (2026) AI Module Routers
-api_router.include_router(alienation.router)
+# api_router.include_router(alienation.router)  # Disabled - use ai_chat instead
 api_router.include_router(risk_predictor.router)
 api_router.include_router(court_package.router)
 api_router.include_router(voice_biometrics.router)
@@ -292,6 +322,10 @@ api_router.include_router(multilingual.router)
 
 # Claude AI Integration (2025) - User-friendly chat & risk analysis
 api_router.include_router(ai_chat.router)
+
+# Phone Recovery (2025) - USB and wireless device recovery
+api_router.include_router(usb_recovery.router)
+api_router.include_router(wireless_recovery.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)

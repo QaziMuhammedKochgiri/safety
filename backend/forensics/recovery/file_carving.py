@@ -524,6 +524,71 @@ def carve_all_from_file(input_path: str, output_dir: str) -> List[CarvedFile]:
     return carver.carve_file(input_path)
 
 
+async def carve_deleted_files(source_dir: str, output_dir: str) -> int:
+    """
+    Async wrapper to scan a directory for recoverable deleted files.
+
+    This scans all files in the source directory for embedded/deleted files
+    using file carving techniques.
+
+    Args:
+        source_dir: Directory to scan for recoverable files
+        output_dir: Directory to save recovered files
+
+    Returns:
+        Number of files recovered
+    """
+    import asyncio
+    from pathlib import Path
+
+    source_path = Path(source_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    carver = FileCarver(str(output_path))
+    total_recovered = 0
+
+    # Scan files that might contain deleted data
+    scannable_extensions = {'.db', '.sqlite', '.bin', '.raw', '.img', '.dat', '.bak'}
+
+    for file_path in source_path.rglob('*'):
+        if not file_path.is_file():
+            continue
+
+        # Scan database files and raw data files
+        if file_path.suffix.lower() in scannable_extensions or file_path.stat().st_size > 1024 * 1024:
+            try:
+                results = carver.carve_file(str(file_path))
+                total_recovered += len(results)
+
+                if results:
+                    logger.info(f"Recovered {len(results)} files from {file_path.name}")
+
+            except Exception as e:
+                logger.warning(f"Error scanning {file_path}: {e}")
+
+        # Allow other tasks to run
+        await asyncio.sleep(0)
+
+    # Also scan for images/media in common locations
+    media_dirs = ['DCIM', 'Pictures', 'Camera', 'Media', 'WhatsApp', 'Telegram']
+    for media_dir in media_dirs:
+        media_path = source_path / media_dir
+        if media_path.exists():
+            for file_path in media_path.rglob('*'):
+                if file_path.is_file() and file_path.stat().st_size > 100:
+                    try:
+                        # Quick scan for embedded images
+                        results = carver.carve_file(str(file_path), file_types=[FileType.JPEG, FileType.PNG])
+                        total_recovered += len(results)
+                    except Exception:
+                        pass
+                await asyncio.sleep(0)
+
+    logger.info(f"Total files recovered: {total_recovered}")
+    return total_recovered
+
+
 # CLI interface
 if __name__ == '__main__':
     import sys

@@ -13,7 +13,28 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install build dependencies required for compiling packages like pytsk3 and curl for health checks
-RUN apt-get update && apt-get install -y build-essential libtsk-dev libsqlite3-dev zlib1g-dev curl
+# Also install USB support and device communication libraries for phone recovery
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libtsk-dev \
+    libsqlite3-dev \
+    zlib1g-dev \
+    curl \
+    # USB Support for phone recovery
+    libusb-1.0-0-dev \
+    libusb-dev \
+    udev \
+    # Android ADB tools
+    android-tools-adb \
+    # iOS device communication (libimobiledevice)
+    libimobiledevice-dev \
+    libimobiledevice-tools \
+    libplist-dev \
+    libplist-utils \
+    ideviceinstaller \
+    # Archive extraction tools
+    p7zip-full \
+    unzip
 
 # Copy the requirements file into the container at /app
 COPY backend/requirements.txt /app/
@@ -22,8 +43,14 @@ COPY backend/requirements.txt /app/
 # We add --no-cache-dir to reduce layer size
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Setup USB device rules for phone recovery
+RUN echo 'ACTION=="add", SUBSYSTEM=="usb", MODE="0666"' > /etc/udev/rules.d/99-usb.rules
+
+# Create directories for phone recovery
+RUN mkdir -p /tmp/phone_recovery /tmp/recovery_output /tmp/recovery_uploads
+
 # Remove build dependencies to reduce image size (optional but recommended for production)
-# Keeping runtime libs for TSK
+# Keeping runtime libs for TSK and USB
 RUN apt-get remove -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # Copy the rest of the backend application's code into the container at /app
@@ -31,8 +58,8 @@ COPY backend/ /app/backend/
 COPY tests/ /app/tests/
 COPY pytest.ini /app/
 
-# Change ownership of the app directory to the new user
-RUN chown -R appuser:appgroup /app /opt/venv
+# Change ownership of the app directory and recovery directories to the new user
+RUN chown -R appuser:appgroup /app /opt/venv /tmp/phone_recovery /tmp/recovery_output /tmp/recovery_uploads
 
 # Make port 8001 available to the world outside this container
 EXPOSE 8001

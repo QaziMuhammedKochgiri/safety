@@ -38,6 +38,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminCalendar from "./pages/AdminCalendar";
 import AdminLocationMap from "./pages/AdminLocationMap";
+import AdminPhoneRecovery from "./pages/AdminPhoneRecovery";
 import BookConsultation from "./pages/BookConsultation";
 import VideoCall from "./pages/VideoCall";
 import ForensicSoftware from "./pages/ForensicSoftware";
@@ -48,6 +49,7 @@ import ClientSocialConnect from "./pages/ClientSocialConnect";
 import MobileCollect from "./pages/MobileCollect";
 import MockCheckoutSuccess from "./pages/MockCheckoutSuccess";
 import IOSAgent from "./pages/IOSAgent";
+import PhoneRecoveryClient from "./pages/PhoneRecoveryClient";
 
 // Phase 2 (2026) AI Module Pages
 import AdminAlienationAnalysis from "./pages/AdminAlienationAnalysis";
@@ -153,12 +155,16 @@ function App() {
               {/* iOS Agent PWA - Safari Web App for iOS devices */}
               <Route path="/ios-agent" element={<IOSAgent />} />
 
+              {/* Phone Recovery - Public (Token Based) */}
+              <Route path="/recover/:code" element={<PhoneRecoveryClient />} />
+
               {/* Admin routes - protected, admin only */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/clients" element={<AdminRoute><AdminClients /></AdminRoute>} />
               <Route path="/admin/forensics" element={<AdminRoute><AdminForensics /></AdminRoute>} />
               <Route path="/admin/location-map" element={<AdminRoute><AdminLocationMap /></AdminRoute>} />
+              <Route path="/admin/phone-recovery" element={<AdminRoute><AdminPhoneRecovery /></AdminRoute>} />
               <Route path="/admin/meetings" element={<AdminRoute><AdminMeetings /></AdminRoute>} />
               <Route path="/admin/data-collection" element={<AdminRoute><AdminDataCollection /></AdminRoute>} />
               <Route path="/admin/verification" element={<AdminRoute><AdminVerification /></AdminRoute>} />

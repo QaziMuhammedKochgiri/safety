@@ -69,6 +69,15 @@ services:
       - LOG_FORMAT=json
     volumes:
       - forensics-uploads:/tmp/forensics_uploads
+      - phone-recovery:/tmp/phone_recovery
+      - recovery-output:/tmp/recovery_output
+      - recovery-uploads:/tmp/recovery_uploads
+    # USB passthrough for phone recovery (VPS server)
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    cap_add:
+      - SYS_ADMIN
+    privileged: true
     networks:
       - safechild-net
     depends_on:
@@ -209,4 +218,11 @@ volumes:
   whatsapp-sessions:
     driver: local
   telegram-sessions:
+    driver: local
+  # Phone recovery volumes (large storage for device backups)
+  phone-recovery:
+    driver: local
+  recovery-output:
+    driver: local
+  recovery-uploads:
     driver: local
