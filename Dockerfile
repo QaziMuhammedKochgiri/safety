@@ -20,21 +20,12 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     zlib1g-dev \
     curl \
-    # USB Support for phone recovery
     libusb-1.0-0-dev \
-    libusb-dev \
     udev \
-    # Android ADB tools
     android-tools-adb \
-    # iOS device communication (libimobiledevice)
-    libimobiledevice-dev \
-    libimobiledevice-tools \
-    libplist-dev \
-    libplist-utils \
-    ideviceinstaller \
-    # Archive extraction tools
     p7zip-full \
-    unzip
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container at /app
 COPY backend/requirements.txt /app/
@@ -51,7 +42,7 @@ RUN mkdir -p /tmp/phone_recovery /tmp/recovery_output /tmp/recovery_uploads
 
 # Remove build dependencies to reduce image size (optional but recommended for production)
 # Keeping runtime libs for TSK and USB
-RUN apt-get remove -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get remove -y build-essential && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # Copy the rest of the backend application's code into the container at /app
 COPY backend/ /app/backend/

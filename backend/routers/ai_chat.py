@@ -1919,3 +1919,71 @@ async def get_all_ai_features(current_user: dict = Depends(get_current_user)):
         "total_endpoints": 13,
         "philosophy": "Baş Yolla - One-click simplicity for 40+ women with minimal tech experience"
     }
+
+
+# ========================================================================
+# DOCUMENT ANALYSIS (Admin Feature)
+# ========================================================================
+
+class DocumentAnalysisRequest(BaseModel):
+    """Request for AI document analysis."""
+    documentContent: str = Field(..., description="Document content to analyze")
+    fileName: str = Field(..., description="Original file name")
+    question: str = Field(..., description="Question to ask about the document")
+    documentNumber: Optional[str] = None
+
+
+@router.post("/analyze-document")
+async def analyze_document(
+    request: DocumentAnalysisRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    **Analyze Document with AI**
+    
+    Admin can upload a document and ask AI questions about it.
+    The AI will analyze the content and provide insights.
+    
+    **Use Cases:**
+    - Summarize legal documents
+    - Extract key information from evidence
+    - Identify potential legal issues
+    - Translate and explain complex text
+    """
+    try:
+        logger.info(f"Document analysis requested by {current_user.get('email')} for file: {request.fileName}")
+        
+        # Build prompt for Claude
+        analysis_prompt = f"""You are a legal assistant helping analyze a document.
+
+Document Name: {request.fileName}
+Document Content:
+{request.documentContent[:10000]}  # Limit to first 10k chars
+
+User Question: {request.question}
+
+Please provide a detailed, professional analysis answering the user's question. Focus on:
+1. Direct answer to the question
+2. Key facts and findings
+3. Legal relevance (if applicable)
+4. Recommendations or action items
+
+Be concise but thorough."""
+
+        # Use ChatAssistant to analyze
+        response = await chat_assistant.send_message(analysis_prompt, session_id=None)
+        
+        return {
+            "analysis": response.content,
+            "fileName": request.fileName,
+            "question": request.question,
+            "timestamp": datetime.now().isoformat(),
+            "documentNumber": request.documentNumber
+        }
+        
+    except Exception as e:
+        logger.error(f"Document analysis error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Document analysis failed: {str(e)}"
+        )

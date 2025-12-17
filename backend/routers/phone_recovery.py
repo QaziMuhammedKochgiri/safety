@@ -1,7 +1,10 @@
 """
-Wireless Recovery Router
-API endpoints for wireless/web-based phone recovery (client-initiated).
-Admin creates a recovery link, client uploads backup via the link.
+Phone Recovery Router
+API endpoints for phone data recovery supporting two scenarios:
+1. Client HAS computer: WebUSB-based extraction via browser
+2. Client has NO computer: Mobile agent (APK/MDM) extraction
+
+Admin creates a recovery link, sends to client, client extracts data.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks, Request
@@ -32,7 +35,7 @@ from backend.models import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/recovery", tags=["Wireless Recovery"])
+router = APIRouter(prefix="/recovery", tags=["Phone Recovery"])
 
 # In-memory storage (would use MongoDB in production)
 recovery_cases = {}
@@ -46,7 +49,7 @@ OUTPUT_BASE = Path("/tmp/recovery_output")
 CHUNK_SIZE = 100 * 1024 * 1024
 
 # Base URL for recovery links
-BASE_URL = os.getenv("BASE_URL", "https://safechild.mom")
+BASE_URL = os.getenv("BASE_URL", "https://portal.safechild-rechtsanwalt.de")
 
 
 def generate_short_code() -> str:
@@ -107,7 +110,8 @@ async def create_recovery_link(request: CreateRecoveryLinkRequest):
 
         # Generate links
         recovery_link = f"{BASE_URL}/recover/{short_code}"
-        apk_link = f"{BASE_URL}/download/safechild-recovery.apk" if request.device_type == "android" else None
+        # Always include APK link (client page will show based on device type)
+        apk_link = f"{BASE_URL}/download/safechild-recovery.apk"
 
         logger.info(f"Created recovery link for client {request.client_number}: {recovery_link}")
 
@@ -209,15 +213,16 @@ async def validate_recovery_code(code: str):
 
     device_info = case.get("device_info", {})
     data_categories = case.get("data_categories", {})
+    device_type = device_info.get("device_type", "auto")
 
     return {
         "valid": True,
         "case_id": case_id,
-        "device_type": device_info.get("device_type"),
+        "device_type": device_type,  # "android", "ios", or "auto" (client auto-detects)
         "data_categories": data_categories,
         "expires_at": case.get("expires_at"),
         "status": case.get("status"),
-        "instructions": _get_backup_instructions(device_info.get("device_type"))
+        "instructions": _get_backup_instructions(device_type) if device_type != "auto" else None
     }
 
 
@@ -336,7 +341,7 @@ async def upload_backup(
                 })
 
                 # Start processing in background
-                background_tasks.add_task(_process_wireless_recovery, case_id)
+                background_tasks.add_task(_process_phone_recovery, case_id)
 
                 return {
                     "success": True,
@@ -381,7 +386,7 @@ async def upload_backup(
             })
 
             # Start processing
-            background_tasks.add_task(_process_wireless_recovery, case_id)
+            background_tasks.add_task(_process_phone_recovery, case_id)
 
             return {
                 "success": True,
@@ -417,7 +422,7 @@ async def _calculate_checksum(file_path: Path) -> str:
     return sha256.hexdigest()
 
 
-async def _process_wireless_recovery(case_id: str):
+async def _process_phone_recovery(case_id: str):
     """Background task to process wireless recovery"""
     try:
         case = recovery_cases.get(case_id)
@@ -447,7 +452,7 @@ async def _process_wireless_recovery(case_id: str):
         case["current_step"] = "Packaging results..."
         case["progress_percent"] = 95
 
-        await _package_wireless_results(case_id, output_dir, stats)
+        await _package_recovery_results(case_id, output_dir, stats)
 
     except Exception as e:
         logger.error(f"Error processing wireless recovery: {e}")
@@ -592,7 +597,7 @@ async def _process_ios_backup(
         stats.deleted_files = deleted_count
 
 
-async def _package_wireless_results(case_id: str, output_dir: Path, stats: RecoveryStatistics):
+async def _package_recovery_results(case_id: str, output_dir: Path, stats: RecoveryStatistics):
     """Package recovery results for wireless recovery"""
     case = recovery_cases.get(case_id)
     if not case:

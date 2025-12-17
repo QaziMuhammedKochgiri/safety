@@ -21,8 +21,7 @@ from ..forensics.reports import (
     ChainOfCustody,
     LegalTemplateEngine,
     Jurisdiction,
-    ExportEngine,
-    generate_forensic_report
+    ExportEngine
 )
 from .. import db
 from ..auth import get_current_admin

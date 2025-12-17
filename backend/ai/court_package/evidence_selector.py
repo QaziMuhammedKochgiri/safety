@@ -174,7 +174,7 @@ LEGAL_ISSUE_EVIDENCE_MAP: Dict[LegalIssue, Dict[str, Any]] = {
             EvidenceType.MEDICAL_RECORD,
             EvidenceType.POLICE_REPORT,
             EvidenceType.RESTRAINING_ORDER,
-            EvidenceType.PHOTOGRAPH
+            EvidenceType.SCREENSHOT
         ]
     },
     LegalIssue.CHILD_ABUSE: {
@@ -238,7 +238,7 @@ LEGAL_ISSUE_EVIDENCE_MAP: Dict[LegalIssue, Dict[str, Any]] = {
         ],
         "evidence_types": [
             EvidenceType.MEDICAL_RECORD,
-            EvidenceType.PHOTOGRAPH,
+            EvidenceType.SCREENSHOT,
             EvidenceType.POLICE_REPORT
         ]
     },
@@ -253,7 +253,7 @@ LEGAL_ISSUE_EVIDENCE_MAP: Dict[LegalIssue, Dict[str, Any]] = {
             "alone", "abandoned", "unsupervised"
         ],
         "evidence_types": [
-            EvidenceType.PHOTOGRAPH,
+            EvidenceType.SCREENSHOT,
             EvidenceType.MEDICAL_RECORD,
             EvidenceType.SOCIAL_WORKER_REPORT
         ]

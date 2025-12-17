@@ -13,7 +13,7 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ..ai.risk_predictor.risk_model import RiskModel, RiskLevel
+from ..ai.risk_predictor.risk_model import RiskPredictor, RiskLevel
 from ..ai.risk_predictor.feature_extractor import FeatureExtractor
 from ..ai.risk_predictor.outcome_correlator import OutcomeCorrelator
 from ..ai.risk_predictor.intervention_recommender import InterventionRecommender
@@ -119,7 +119,7 @@ async def analyze_risk(request: RiskAnalysisRequest):
     """
     try:
         # Initialize components
-        risk_model = RiskModel()
+        risk_model = RiskPredictor()
         feature_extractor = FeatureExtractor()
         explainer = RiskExplainer()
         intervention_recommender = InterventionRecommender()
@@ -234,7 +234,7 @@ async def get_risk_factors():
     and descriptions.
     """
     try:
-        risk_model = RiskModel()
+        risk_model = RiskPredictor()
         factors = risk_model.get_all_factors()
 
         return {
@@ -373,7 +373,7 @@ async def what_if_analysis(request: WhatIfRequest):
         original_score = analysis.get("overall_score", 0)
 
         # Create modified features
-        risk_model = RiskModel()
+        risk_model = RiskPredictor()
         feature_extractor = FeatureExtractor()
 
         # Get original factors and apply changes

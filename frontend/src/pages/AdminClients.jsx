@@ -14,8 +14,7 @@ import { ArrowLeft, Search, Edit, Trash2, Eye, Mail, Phone, MapPin, Upload, Plus
 import EnhancedClientView from '../components/EnhancedClientView';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = process.env.REACT_APP_API_URL || '/api';
 
 const AdminClients = () => {
   const { language } = useLanguage();

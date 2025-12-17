@@ -509,10 +509,26 @@ const AdminDataCollection = () => {
                     ) : (
                       <Smartphone className="w-5 h-5 mr-2" />
                     )}
-                    {language === 'de' ? 'Android Link erstellen' : 'Create Android Link'}
+                    {language === 'de' ? '🤖 Android Link erstellen' : '🤖 Create Android Link'}
+                  </Button>
+                  <Button
+                    className="w-full h-14 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-lg"
+                    onClick={() => {
+                      const iosLink = `https://safechild.mom/ios-agent?token=${clientNumber}&client=${client.firstName}_${client.lastName}`;
+                      navigator.clipboard.writeText(iosLink);
+                      toast.success(language === 'de' ? 'iOS Agent Link kopiert!' : 'iOS Agent link copied!');
+                      setMobileLink({
+                        collectionLink: iosLink,
+                        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                      });
+                    }}
+                    disabled={mobileLinkLoading}
+                  >
+                    <Smartphone className="w-5 h-5 mr-2" />
+                    {language === 'de' ? '🍎 iOS Agent (PWA)' : '🍎 iOS Agent (PWA)'}
                   </Button>
                   <p className="text-xs text-center text-gray-500">
-                    {language === 'de' ? 'iOS-Unterstützung kommt bald' : 'iOS support coming soon'}
+                    {language === 'de' ? 'iOS Agent: Safari Web App für iPhones' : 'iOS Agent: Safari Web App for iPhones'}
                   </p>
                 </div>
               </div>

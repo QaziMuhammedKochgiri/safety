@@ -9,11 +9,11 @@ COPY frontend/package.json frontend/yarn.lock ./
 # Install dependencies
 RUN yarn install
 
-# Set environment variable for React App at build time
-ENV REACT_APP_BACKEND_URL=
-
 # Copy the rest of the frontend application's code
 COPY frontend/ ./
+
+# Set environment variable for Create React App at build time
+ENV REACT_APP_API_URL=/api
 
 # Build the application using craco with node directly (symlink issues in Docker Alpine)
 RUN node node_modules/@craco/craco/dist/bin/craco.js build

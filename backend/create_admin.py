@@ -35,7 +35,7 @@ async def create_admin():
 
         # Admin credentials
         admin_email = "admin@safechild.mom"
-        admin_password = "Str0ngP@ssw0rd_f0r_S@f3Child_!2025"  # Change this in production!
+        admin_password = "AdminPass2025!"  # Change this in production!
         
         # Check if admin exists
         print(f"🔍 Checking for existing admin: {admin_email}")

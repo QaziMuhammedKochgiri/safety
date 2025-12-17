@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   Users, FileText, Shield, MessageSquare,
   LogOut, TrendingUp, Activity, Eye, Video, Fingerprint,
-  FileSearch, Database, Headphones
+  FileSearch, Database, Headphones, Smartphone
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -260,6 +260,14 @@ const AdminDashboard = () => {
               >
                 <Fingerprint className="w-8 h-8" />
                 <span>{language === 'de' ? 'Forensische Fälle' : 'Forensic Cases'}</span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/admin/phone-recovery')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-violet-600 hover:bg-violet-700"
+              >
+                <Smartphone className="w-8 h-8" />
+                <span>{language === 'de' ? 'Telefon Wiederherstellung' : 'Phone Recovery'}</span>
               </Button>
 
               <Button

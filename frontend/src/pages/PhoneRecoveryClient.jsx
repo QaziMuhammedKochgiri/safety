@@ -202,7 +202,10 @@ const PhoneRecoveryClient = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const deviceType = caseData?.device_type || 'android';
+  // Device type: use detected type if "auto", otherwise use case data
+  const deviceType = caseData?.device_type === 'auto'
+    ? (isAndroid ? 'android' : isIOS ? 'ios' : 'android')
+    : (caseData?.device_type || 'android');
   const isTargetAndroid = deviceType === 'android';
 
   if (loading) {

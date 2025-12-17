@@ -14,9 +14,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ..ai.multilingual.language_detector import LanguageDetector
 from ..ai.multilingual.idiom_translator import IdiomTranslator
-from ..ai.multilingual.cultural_context import CulturalContextAnalyzer
+from ..ai.multilingual.cultural_context import CulturalContext
 from ..ai.multilingual.cultural_analyzer import CulturalAnalyzer
-from ..ai.multilingual.legal_terminology import LegalTerminologyManager
+from ..ai.multilingual.legal_terminology import LegalTerminology
 from .. import db
 
 router = APIRouter(
@@ -174,7 +174,7 @@ async def translate_text(request: TranslationRequest):
     try:
         detector = LanguageDetector()
         translator = IdiomTranslator()
-        legal_manager = LegalTerminologyManager()
+        legal_manager = LegalTerminology()
 
         # Auto-detect source language if not provided
         source_lang = request.source_language
@@ -235,7 +235,7 @@ async def lookup_legal_term(request: LegalTermRequest):
     legal systems (German, Turkish, EU, UK, US).
     """
     try:
-        legal_manager = LegalTerminologyManager()
+        legal_manager = LegalTerminology()
 
         result = legal_manager.lookup(
             term=request.term,
@@ -322,7 +322,7 @@ async def analyze_cultural_context(request: CulturalContextRequest):
     """
     try:
         cultural_analyzer = CulturalAnalyzer()
-        context_analyzer = CulturalContextAnalyzer()
+        context_analyzer = CulturalContext()
         detector = LanguageDetector()
 
         # Detect culture if not provided

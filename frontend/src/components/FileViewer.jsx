@@ -28,7 +28,7 @@ const FileViewer = ({ file, onClose }) => {
 
   const getFileUrl = () => {
     // Construct file URL from backend
-    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+    const API = process.env.REACT_APP_API_URL || "/api";
     if (file.filePath) {
       return `${BACKEND_URL}${file.filePath}`;
     }

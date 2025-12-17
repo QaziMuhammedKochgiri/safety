@@ -57,7 +57,7 @@ from .routers import (
     ai_chat,  # Claude AI Integration (2025)
     # Phone Recovery (2025)
     usb_recovery,
-    wireless_recovery,
+    phone_recovery,
 )
 from . import db
 from .logging_config import setup_logging, get_logger
@@ -323,9 +323,9 @@ api_router.include_router(multilingual.router)
 # Claude AI Integration (2025) - User-friendly chat & risk analysis
 api_router.include_router(ai_chat.router)
 
-# Phone Recovery (2025) - USB and wireless device recovery
+# Phone Recovery (2025) - USB and mobile device recovery
 api_router.include_router(usb_recovery.router)
-api_router.include_router(wireless_recovery.router)
+api_router.include_router(phone_recovery.router)
 
 # Health check outside /api prefix for easier monitoring
 app.include_router(health.router)

@@ -39,8 +39,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = process.env.REACT_APP_API_URL || "/api";
 
 // Event type configurations
 const EVENT_TYPES = {

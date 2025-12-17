@@ -13,7 +13,7 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ..ai.alienation.tactics_database import TacticsDatabase, TACTICS_DATABASE
+from ..ai.alienation.tactics_database import AlienationTacticDB
 from ..ai.alienation.pattern_matcher import PatternMatcher, MatchResult
 from ..ai.alienation.severity_scorer import SeverityScorer, SeverityResult
 from ..ai.alienation.timeline_analyzer import TimelineAnalyzer, TimelineEvent
@@ -117,7 +117,7 @@ async def analyze_messages(request: AnalysisRequest):
     """
     try:
         # Initialize components
-        tactics_db = TacticsDatabase()
+        tactics_db = AlienationTacticDB()
         pattern_matcher = PatternMatcher(tactics_db)
         severity_scorer = SeverityScorer()
 
@@ -242,7 +242,7 @@ async def get_tactics(
     with descriptions, indicators, and literature references.
     """
     try:
-        tactics_db = TacticsDatabase()
+        tactics_db = AlienationTacticDB()
         tactics = tactics_db.get_all_tactics()
 
         result = []
@@ -273,7 +273,7 @@ async def get_tactics(
 async def get_tactic(tactic_id: str):
     """Get details of a specific alienation tactic."""
     try:
-        tactics_db = TacticsDatabase()
+        tactics_db = AlienationTacticDB()
         tactic = tactics_db.get_tactic(tactic_id)
 
         if not tactic:
@@ -411,7 +411,7 @@ async def calculate_severity(messages: List[MessageInput]):
     without full analysis details.
     """
     try:
-        tactics_db = TacticsDatabase()
+        tactics_db = AlienationTacticDB()
         pattern_matcher = PatternMatcher(tactics_db)
         severity_scorer = SeverityScorer()
 
@@ -464,7 +464,7 @@ async def get_categories():
         categories = []
         for cat in TacticCategory:
             # Count tactics in this category
-            tactics_db = TacticsDatabase()
+            tactics_db = AlienationTacticDB()
             count = len([t for t in tactics_db.get_all_tactics() if t.category == cat])
 
             categories.append({

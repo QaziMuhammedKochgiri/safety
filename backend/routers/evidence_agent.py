@@ -13,8 +13,8 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ..ai.evidence_agent.collection_engine import CollectionEngine
-from ..ai.evidence_agent.scheduler import ScheduleManager
+from ..ai.evidence_agent.collection_engine import EvidenceCollector
+from ..ai.evidence_agent.scheduler import CollectionScheduler
 from ..ai.evidence_agent.change_detector import ChangeDetector
 from ..ai.evidence_agent.alert_system import AlertManager
 from ..ai.evidence_agent.digest_generator import DigestGenerator
@@ -169,7 +169,7 @@ async def create_schedule(schedule: ScheduleCreate):
     at the given frequency.
     """
     try:
-        schedule_manager = ScheduleManager()
+        schedule_manager = CollectionScheduler()
 
         schedule_id = f"SCH-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
 
@@ -297,7 +297,7 @@ async def update_schedule(schedule_id: str, update: ScheduleUpdate):
 
         # Recalculate next run if frequency changed
         if "frequency" in update_doc or "cron_expression" in update_doc:
-            schedule_manager = ScheduleManager()
+            schedule_manager = CollectionScheduler()
             update_doc["next_run"] = schedule_manager.calculate_next_run(
                 frequency=update_doc.get("frequency", schedule.get("frequency")),
                 cron_expression=update_doc.get("cron_expression", schedule.get("cron_expression"))
@@ -356,7 +356,7 @@ async def run_schedule_now(schedule_id: str):
         if not schedule:
             raise HTTPException(status_code=404, detail="Schedule not found")
 
-        collection_engine = CollectionEngine()
+        collection_engine = EvidenceCollector()
 
         # Run collection
         result = await collection_engine.collect(

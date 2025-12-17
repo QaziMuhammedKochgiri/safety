@@ -318,7 +318,7 @@ class RecoveryProcessingJob(BaseModel):
 # Request/Response models for API
 class CreateRecoveryLinkRequest(BaseModel):
     client_number: str
-    device_type: str  # "android" | "ios"
+    device_type: str = "auto"  # "android" | "ios" | "auto" (auto-detect on client)
     data_categories: Optional[DataCategories] = None
     expires_in_days: int = 15
 

@@ -8,8 +8,7 @@ import {
 import { Input } from './ui/input';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = process.env.REACT_APP_API_URL || "/api";
 
 // URL'leri tıklanabilir linklere çevir
 const linkifyText = (text, isClientMessage = false) => {

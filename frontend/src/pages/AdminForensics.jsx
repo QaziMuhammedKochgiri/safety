@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = process.env.REACT_APP_API_URL || "/api";
+
 
 const AdminForensics = () => {
   const { language } = useLanguage();
@@ -97,7 +97,7 @@ const AdminForensics = () => {
     if (!selectedCase || selectedCase.status !== 'completed') return;
 
     try {
-      const response = await axios.get(`${API}/forensics/${selectedCase.case_id}/report`, {
+      const response = await axios.get(`${API}/forensics/report/${selectedCase.case_id}`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { format },
         responseType: 'blob'
