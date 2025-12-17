@@ -72,21 +72,49 @@ const LoginModal = ({ onClose }) => {
           <X size={24} />
         </button>
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-            {isLogin ? <LogIn className="text-white" size={28} /> : <UserPlus className="text-white" size={28} />}
+        {/* Header with Tabs */}
+        <div className="mb-6">
+          {/* Tab Switcher */}
+          <div className="flex border-b border-gray-200 mb-4">
+            <button
+              onClick={() => {
+                setIsLogin(true);
+                setError('');
+              }}
+              className={`flex-1 py-3 text-center font-semibold transition-all ${
+                isLogin
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {language === 'de' ? 'Anmelden' : 'Login'}
+            </button>
+            <button
+              onClick={() => {
+                setIsLogin(false);
+                setError('');
+              }}
+              className={`flex-1 py-3 text-center font-semibold transition-all ${
+                !isLogin
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {language === 'de' ? 'Registrieren' : 'Sign Up'}
+            </button>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            {isLogin
-              ? (language === 'de' ? 'Anmelden' : 'Login')
-              : (language === 'de' ? 'Registrieren' : 'Sign Up')}
-          </h2>
-          <p className="text-gray-500 mt-1">
-            {isLogin
-              ? (language === 'de' ? 'Willkommen zurück!' : 'Welcome back!')
-              : (language === 'de' ? 'Erstellen Sie Ihr Konto' : 'Create your account')}
-          </p>
+
+          {/* Icon and Description */}
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+              {isLogin ? <LogIn className="text-white" size={28} /> : <UserPlus className="text-white" size={28} />}
+            </div>
+            <p className="text-gray-500">
+              {isLogin
+                ? (language === 'de' ? 'Willkommen zurück!' : 'Welcome back!')
+                : (language === 'de' ? 'Erstellen Sie Ihr Konto' : 'Create your account')}
+            </p>
+          </div>
         </div>
 
         {/* Form */}
@@ -147,21 +175,6 @@ const LoginModal = ({ onClose }) => {
               : (language === 'de' ? 'Registrieren' : 'Sign Up')}
           </button>
         </form>
-
-        {/* Toggle */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-            }}
-            className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-          >
-            {isLogin
-              ? (language === 'de' ? 'Noch kein Konto? Registrieren' : "Don't have an account? Sign Up")
-              : (language === 'de' ? 'Haben Sie bereits ein Konto? Anmelden' : 'Already have an account? Login')}
-          </button>
-        </div>
       </div>
     </div>
   );

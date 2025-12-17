@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { t } from '../translations';
 import { Button } from './ui/button';
-import { Globe, Menu, X, ChevronDown, Sparkles, Brain, FileText, Languages, Shield, Package, Clock, Scale, LogIn } from 'lucide-react';
+import { Globe, Menu, X, ChevronDown, Sparkles, Brain, FileText, Languages, Shield, Package, Clock, Scale, LogIn, User, LogOut } from 'lucide-react';
 import LoginModal from './LoginModal';
 
 const Header = () => {
   const { language, toggleLanguage } = useLanguage();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setUserDropdownOpen(false);
+    navigate('/');
+  };
 
   const navItems = [
     { path: '/', label: t(language, 'home') },
@@ -132,8 +140,40 @@ const Header = () => {
                 <span className="font-semibold">{language.toUpperCase()}</span>
               </Button>
 
-              {/* Login Button */}
-              {!user && (
+              {/* User Dropdown or Login Button */}
+              {user ? (
+                <div
+                  className="relative"
+                  onMouseEnter={() => setUserDropdownOpen(true)}
+                  onMouseLeave={() => setUserDropdownOpen(false)}
+                >
+                  <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg transition-all">
+                    <User className="w-4 h-4" />
+                    <span className="font-medium">{user.username}</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {userDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl py-2 z-50">
+                      <Link
+                        to="/dashboard"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        {language === 'de' ? 'Dashboard' : 'Dashboard'}
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        {language === 'de' ? 'Ausloggen' : 'Logout'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <Button
                   onClick={() => setShowLoginModal(true)}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
@@ -142,6 +182,7 @@ const Header = () => {
                   {language === 'de' ? 'Anmelden' : 'Login'}
                 </Button>
               )}
+
               <a href="mailto:info@safechild.mom">
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   {t(language, 'contact')}
@@ -207,21 +248,59 @@ const Header = () => {
                 {user ? (language === 'de' ? 'Dashboard' : 'Dashboard') : (language === 'de' ? 'Portal' : 'Portal')}
               </Link>
 
-              <div className="flex items-center space-x-4 pt-4 border-t">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleLanguage}
-                  className="flex items-center space-x-2"
-                >
-                  <Globe className="w-4 h-4" />
-                  <span className="font-semibold">{language.toUpperCase()}</span>
-                </Button>
-                <a href="mailto:info@safechild.mom">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    {t(language, 'contact')}
+              <div className="space-y-3 pt-4 border-t">
+                {/* User info and logout for mobile */}
+                {user && (
+                  <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="w-5 h-5 text-purple-600" />
+                        <span className="font-semibold text-gray-800">{user.username}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="flex items-center gap-1 px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        {language === 'de' ? 'Ausloggen' : 'Logout'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleLanguage}
+                    className="flex items-center space-x-2"
+                  >
+                    <Globe className="w-4 h-4" />
+                    <span className="font-semibold">{language.toUpperCase()}</span>
                   </Button>
-                </a>
+
+                  {!user && (
+                    <Button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setShowLoginModal(true);
+                      }}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center gap-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      {language === 'de' ? 'Anmelden' : 'Login'}
+                    </Button>
+                  )}
+
+                  <a href="mailto:info@safechild.mom">
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      {t(language, 'contact')}
+                    </Button>
+                  </a>
+                </div>
               </div>
             </nav>
           </div>
