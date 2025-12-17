@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = process.env.REACT_APP_API_URL || "/api";
+
 
 const AdminDashboard = () => {
   const { language } = useLanguage();
@@ -316,6 +316,14 @@ const AdminDashboard = () => {
               >
                 <Headphones className="w-8 h-8" />
                 <span>{language === 'de' ? 'Live-Support' : 'Canli Destek'}</span>
+              </Button>
+
+              <Button
+                onClick={() => navigate('/admin/location-map')}
+                className="h-24 flex flex-col items-center justify-center space-y-2 bg-emerald-600 hover:bg-emerald-700"
+              >
+                <Eye className="w-8 h-8" />
+                <span>{language === 'de' ? 'GPS Konum Haritası' : 'GPS Location Map'}</span>
               </Button>
             </div>
           </CardContent>

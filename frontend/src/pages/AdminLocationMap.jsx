@@ -39,17 +39,17 @@ const AdminLocationMap = () => {
   const fetchCases = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/cases', {
+      const response = await axios.get('/api/admin/forensics', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCases(response.data || []);
+      // Response format: { cases: [...], total: N }
+      const forensicCases = response.data.cases || [];
+      setCases(forensicCases);
 
-      // Auto-select first case with forensic data
-      if (response.data?.length > 0) {
-        const caseWithForensics = response.data.find(c =>
-          c.has_forensics || c.forensic_status === 'completed'
-        ) || response.data[0];
-        setSelectedCase(caseWithForensics);
+      // Auto-select first completed case (only completed cases have location data)
+      if (forensicCases.length > 0) {
+        const completedCase = forensicCases.find(c => c.status === 'completed') || forensicCases[0];
+        setSelectedCase(completedCase);
       }
     } catch (error) {
       console.error('Error fetching cases:', error);
@@ -59,9 +59,11 @@ const AdminLocationMap = () => {
   };
 
   const filteredCases = cases.filter(c =>
+    c.case_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.case_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.uploaded_file?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleLocationSelect = (location) => {
@@ -156,7 +158,7 @@ const AdminLocationMap = () => {
                 <FileText className="w-4 h-4 text-gray-400" />
                 <span className="flex-1 text-left truncate">
                   {selectedCase
-                    ? `${selectedCase.case_number} - ${selectedCase.client_name || selectedCase.title}`
+                    ? `${selectedCase.case_id} - ${selectedCase.uploaded_file || selectedCase.title || 'Forensic Case'}`
                     : 'Dava Seçin'}
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${showCaseDropdown ? 'rotate-180' : ''}`} />
@@ -192,23 +194,25 @@ const AdminLocationMap = () => {
                             setUploadResult(null);
                           }}
                           className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b last:border-0 transition-colors ${
-                            selectedCase?._id === c._id ? 'bg-green-50' : ''
+                            selectedCase?.case_id === c.case_id ? 'bg-green-50' : ''
                           }`}
                         >
                           <div className="font-medium text-sm text-gray-800">
-                            {c.case_number}
+                            {c.case_id}
                           </div>
                           <div className="text-xs text-gray-500 truncate">
-                            {c.client_name || c.title}
+                            {c.uploaded_file || c.title || 'Forensic Analysis'}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`text-xs px-2 py-0.5 rounded ${
-                              c.forensic_status === 'completed' ? 'bg-green-100 text-green-700' :
-                              c.forensic_status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
+                              c.status === 'completed' ? 'bg-green-100 text-green-700' :
+                              c.status === 'processing' ? 'bg-yellow-100 text-yellow-700' :
+                              c.status === 'failed' ? 'bg-red-100 text-red-700' :
                               'bg-gray-100 text-gray-600'
                             }`}>
-                              {c.forensic_status === 'completed' ? 'Tamamlandı' :
-                               c.forensic_status === 'in_progress' ? 'Devam Ediyor' :
+                              {c.status === 'completed' ? 'Tamamlandı' :
+                               c.status === 'processing' ? 'İşleniyor' :
+                               c.status === 'failed' ? 'Başarısız' :
                                'Bekliyor'}
                             </span>
                           </div>
@@ -246,10 +250,10 @@ const AdminLocationMap = () => {
                   </div>
                   <div>
                     <h2 className="font-semibold text-gray-800">
-                      {selectedCase.case_number}
+                      {selectedCase.case_id}
                     </h2>
                     <p className="text-sm text-gray-500">
-                      {selectedCase.client_name || selectedCase.title}
+                      {selectedCase.uploaded_file || selectedCase.title || 'Forensic Analysis'}
                     </p>
                   </div>
                 </div>

@@ -37,6 +37,7 @@ import AdminCaseTimeline from "./pages/AdminCaseTimeline";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminCalendar from "./pages/AdminCalendar";
+import AdminLocationMap from "./pages/AdminLocationMap";
 import BookConsultation from "./pages/BookConsultation";
 import VideoCall from "./pages/VideoCall";
 import ForensicSoftware from "./pages/ForensicSoftware";
@@ -157,6 +158,7 @@ function App() {
               <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/clients" element={<AdminRoute><AdminClients /></AdminRoute>} />
               <Route path="/admin/forensics" element={<AdminRoute><AdminForensics /></AdminRoute>} />
+              <Route path="/admin/location-map" element={<AdminRoute><AdminLocationMap /></AdminRoute>} />
               <Route path="/admin/meetings" element={<AdminRoute><AdminMeetings /></AdminRoute>} />
               <Route path="/admin/data-collection" element={<AdminRoute><AdminDataCollection /></AdminRoute>} />
               <Route path="/admin/verification" element={<AdminRoute><AdminVerification /></AdminRoute>} />
