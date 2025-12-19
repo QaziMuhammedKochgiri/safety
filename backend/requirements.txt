@@ -65,7 +65,7 @@ typer==0.20.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzdata==2025.2
-urllib3==2.5.0
+urllib3==2.6.2
 uvicorn==0.25.0
 watchfiles==1.1.1
 # emergentintegrations==0.1.0
