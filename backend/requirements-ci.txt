@@ -29,7 +29,7 @@ python-multipart==0.0.20
 requests==2.32.5
 starlette==0.37.2
 typing_extensions==4.15.0
-urllib3==2.5.0
+urllib3==2.6.2
 uvicorn==0.25.0
 
 # Testing
